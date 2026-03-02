@@ -1,0 +1,601 @@
+---
+title: 'Database Schema'
+description: 'MongoDB collections and data models for Study Sync'
+---
+
+## Overview
+
+Study Sync uses MongoDB as its primary database with **5 core collections**. The schema is designed for flexibility, de-duplication, and performance.
+
+**Database Name**: `study_sync`
+
+**Driver**: MongoDB Native Driver 7.0.0
+
+**Connection**: MongoDB Atlas (cloud-hosted)
+
+## Collections
+
+### 1. `users`
+
+Stores user profiles, notification preferences, and role information.
+
+#### Schema
+
+```javascript
+{
+  _id: ObjectId,
+  firebaseUid: String,           // Unique Firebase user ID
+  email: String,                 // User email (unique)
+  displayName: String,           // Display name
+  photoURL: String,              // Profile picture URL
+  role: String,                  // "user" | "admin"
+  notificationSettings: {
+    emailReminders: Boolean,     // Enable email reminders
+    reminderTime: String,        // "09:00" format
+    reminderFrequency: String,   // "daily" | "weekly"
+    customDays: [Number],        // [1,2,3,4,5] (Mon-Fri)
+    deadlineWarnings: Boolean,   // Deadline reminder emails
+    weeklyDigest: Boolean        // Weekly summary email
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### Indexes
+
+```javascript
+{ firebaseUid: 1 }  // unique
+{ email: 1 }        // unique
+```
+
+**Reference**: `src/lib/db.js:39`
+
+#### Schema Validation
+
+**Location**: `src/lib/db.js:74`
+
+```javascript
+user: (data) => ({
+  firebaseUid: data.firebaseUid,
+  email: data.email,
+  displayName: data.displayName || "",
+  photoURL: data.photoURL || "",
+  role: data.role || "user",
+  notificationSettings: data.notificationSettings || {
+    emailReminders: true,
+    reminderTime: "09:00",
+    reminderFrequency: "daily",
+    customDays: [1, 2, 3, 4, 5],
+    deadlineWarnings: true,
+    weeklyDigest: true,
+  },
+  createdAt: data.createdAt || new Date(),
+  updatedAt: new Date(),
+})
+```
+
+#### Sample Document
+
+```json
+{
+  "_id": ObjectId("507f1f77bcf86cd799439011"),
+  "firebaseUid": "abc123xyz789",
+  "email": "student@university.edu",
+  "displayName": "John Doe",
+  "photoURL": "https://lh3.googleusercontent.com/...",
+  "role": "user",
+  "notificationSettings": {
+    "emailReminders": true,
+    "reminderTime": "09:00",
+    "reminderFrequency": "daily",
+    "customDays": [1, 2, 3, 4, 5],
+    "deadlineWarnings": true,
+    "weeklyDigest": true
+  },
+  "createdAt": ISODate("2024-01-15T10:30:00Z"),
+  "updatedAt": ISODate("2024-02-20T14:22:00Z")
+}
+```
+
+---
+
+### 2. `resources`
+
+Global resource pool storing YouTube videos, PDFs, articles, and custom links. Resources are **de-duplicated by URL**.
+
+#### Schema
+
+```javascript
+{
+  _id: ObjectId,
+  url: String,                   // Unique resource URL
+  title: String,                 // Resource title
+  type: String,                  // "youtube-video" | "pdf" | "article" | "google-drive" | "custom-link"
+  metadata: {
+    // For youtube-video:
+    duration: Number,            // Duration in seconds
+    videoId: String,             // YouTube video ID
+    thumbnail: String,           // Thumbnail URL
+    
+    // For pdf:
+    pages: Number,               // Number of pages
+    minsPerPage: Number,         // Estimated minutes per page (default: 3)
+    
+    // For article, google-drive, custom-link:
+    estimatedMins: Number        // Estimated reading/completion time
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### Indexes
+
+```javascript
+{ url: 1 }   // unique - ensures de-duplication
+{ type: 1 }  // for filtering by resource type
+```
+
+**Reference**: `src/lib/db.js:54`
+
+#### Schema Validation
+
+**Location**: `src/lib/db.js:126`
+
+```javascript
+resource: (data) => ({
+  url: data.url,
+  title: data.title,
+  type: data.type,
+  metadata: data.metadata || {},
+  createdAt: data.createdAt || new Date(),
+  updatedAt: new Date(),
+})
+```
+
+#### Resource Types
+
+| Type | Description | Metadata Fields |
+|------|-------------|----------------|
+| `youtube-video` | YouTube video | `duration`, `videoId`, `thumbnail` |
+| `pdf` | PDF document | `pages`, `minsPerPage` |
+| `article` | Web article | `estimatedMins` |
+| `google-drive` | Google Drive file | `estimatedMins` (optional) |
+| `custom-link` | Any external link | `estimatedMins` (optional) |
+
+#### De-duplication Logic
+
+**Location**: `src/app/api/resources/route.js:238`
+
+```javascript
+const existingResource = await resources.findOne({
+  url: resourcesToCreate[0].url,
+});
+
+if (existingResource) {
+  // Resource already exists, return it
+  return createSuccessResponse({
+    message: "Resource already exists",
+    resource: existingResource,
+    isNew: false,
+  }, 200);
+}
+```
+
+#### Sample Document
+
+```json
+{
+  "_id": ObjectId("507f1f77bcf86cd799439022"),
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "title": "Introduction to Algorithms",
+  "type": "youtube-video",
+  "metadata": {
+    "duration": 3600,
+    "videoId": "dQw4w9WgXcQ",
+    "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+  },
+  "createdAt": ISODate("2024-01-20T08:15:00Z"),
+  "updatedAt": ISODate("2024-01-20T08:15:00Z")
+}
+```
+
+---
+
+### 3. `studyplans`
+
+Study plan templates created by users. Contains metadata, resource references, and sharing settings.
+
+#### Schema
+
+```javascript
+{
+  _id: ObjectId,
+  title: String,                 // Plan title
+  shortDescription: String,      // Brief description
+  fullDescription: String,       // Detailed description
+  courseCode: String,            // Course code (e.g., "CSE110")
+  resourceIds: [ObjectId],       // References to resources collection
+  createdBy: ObjectId,           // Reference to users collection
+  sharedWith: [
+    {
+      userId: ObjectId,          // User ID (if registered)
+      email: String,             // Email (for invitations)
+      role: String,              // "editor" | "viewer"
+      sharedAt: Date
+    }
+  ],
+  isPublic: Boolean,             // Public visibility
+  lastModifiedBy: ObjectId,      // Last editor
+  lastModifiedAt: Date,
+  instanceCount: Number,         // Number of instances created
+  viewCount: Number,             // View counter
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### Indexes
+
+```javascript
+{ createdBy: 1 }              // Find user's plans
+{ isPublic: 1 }               // Filter public plans
+{ courseCode: 1 }             // Filter by course
+{ "sharedWith.userId": 1 }    // Find shared plans
+```
+
+**Reference**: `src/lib/db.js:43`
+
+#### Schema Validation
+
+**Location**: `src/lib/db.js:92`
+
+```javascript
+studyPlan: (data) => ({
+  title: data.title,
+  shortDescription: data.shortDescription,
+  fullDescription: data.fullDescription || "",
+  courseCode: data.courseCode,
+  resourceIds: (data.resourceIds || [])
+    .map((id) => toObjectId(id))
+    .filter(Boolean),
+  createdBy: toObjectId(data.createdBy),
+  sharedWith: data.sharedWith || [],
+  isPublic: data.isPublic || false,
+  lastModifiedBy: toObjectId(data.lastModifiedBy),
+  lastModifiedAt: new Date(),
+  instanceCount: data.instanceCount || 0,
+  viewCount: data.viewCount || 0,
+  createdAt: data.createdAt || new Date(),
+  updatedAt: new Date(),
+})
+```
+
+#### Sample Document
+
+```json
+{
+  "_id": ObjectId("507f1f77bcf86cd799439033"),
+  "title": "Data Structures Complete Guide",
+  "shortDescription": "Comprehensive study plan covering all DS topics",
+  "fullDescription": "This plan includes video lectures, practice problems, and reading materials...",
+  "courseCode": "CSE220",
+  "resourceIds": [
+    ObjectId("507f1f77bcf86cd799439022"),
+    ObjectId("507f1f77bcf86cd799439023")
+  ],
+  "createdBy": ObjectId("507f1f77bcf86cd799439011"),
+  "sharedWith": [
+    {
+      "userId": ObjectId("507f1f77bcf86cd799439012"),
+      "email": "collaborator@university.edu",
+      "role": "editor",
+      "sharedAt": ISODate("2024-02-01T10:00:00Z")
+    }
+  ],
+  "isPublic": true,
+  "lastModifiedBy": ObjectId("507f1f77bcf86cd799439011"),
+  "lastModifiedAt": ISODate("2024-02-15T16:30:00Z"),
+  "instanceCount": 42,
+  "viewCount": 328,
+  "createdAt": ISODate("2024-01-10T09:00:00Z"),
+  "updatedAt": ISODate("2024-02-15T16:30:00Z")
+}
+```
+
+---
+
+### 4. `instances`
+
+User's personal instances of study plans with deadlines, notes, and progress tracking.
+
+#### Schema
+
+```javascript
+{
+  _id: ObjectId,
+  studyPlanId: ObjectId,         // Reference to studyplans
+  userId: ObjectId,              // Reference to users
+  snapshotResourceIds: [ObjectId], // Snapshot of resourceIds at creation time
+  customTitle: String,           // Optional custom title
+  notes: String,                 // Personal notes
+  deadline: Date,                // Target completion date
+  startedAt: Date,               // When instance was created
+  customReminders: [
+    {
+      type: String,              // "days" | "hours"
+      value: Number,             // e.g., 1 day, 2 hours
+      sent: Boolean              // Reminder sent flag
+    }
+  ],
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### Indexes
+
+```javascript
+{ userId: 1 }                      // Find user's instances
+{ studyPlanId: 1 }                 // Find instances of a plan
+{ userId: 1, studyPlanId: 1 }      // Compound index for queries
+```
+
+**Reference**: `src/lib/db.js:49`
+
+#### Schema Validation
+
+**Location**: `src/lib/db.js:111`
+
+```javascript
+instance: (data) => ({
+  studyPlanId: toObjectId(data.studyPlanId),
+  userId: toObjectId(data.userId),
+  snapshotResourceIds: (data.snapshotResourceIds || [])
+    .map((id) => toObjectId(id))
+    .filter(Boolean),
+  customTitle: data.customTitle || "",
+  notes: data.notes || "",
+  deadline: data.deadline ? new Date(data.deadline) : null,
+  startedAt: data.startedAt || new Date(),
+  customReminders: data.customReminders || [],
+  createdAt: data.createdAt || new Date(),
+  updatedAt: new Date(),
+})
+```
+
+#### Snapshot Pattern
+
+When an instance is created, it **snapshots** the current `resourceIds` from the study plan. This ensures instances remain independent even if the original plan is modified.
+
+**Implementation**: `src/app/api/instances/route.js:174`
+
+```javascript
+const snapshotResourceIds = plan.resourceIds || [];
+
+const newInstance = {
+  userId: auth.user._id,
+  studyPlanId: planId,
+  snapshotResourceIds: snapshotResourceIds, // Frozen at creation time
+  // ...
+};
+```
+
+#### Sample Document
+
+```json
+{
+  "_id": ObjectId("507f1f77bcf86cd799439044"),
+  "studyPlanId": ObjectId("507f1f77bcf86cd799439033"),
+  "userId": ObjectId("507f1f77bcf86cd799439011"),
+  "snapshotResourceIds": [
+    ObjectId("507f1f77bcf86cd799439022"),
+    ObjectId("507f1f77bcf86cd799439023")
+  ],
+  "customTitle": "Midterm Prep - Data Structures",
+  "notes": "Focus on trees and graphs for the exam",
+  "deadline": ISODate("2024-03-15T23:59:59Z"),
+  "startedAt": ISODate("2024-02-20T10:00:00Z"),
+  "customReminders": [
+    {
+      "type": "days",
+      "value": 1,
+      "sent": false
+    },
+    {
+      "type": "hours",
+      "value": 2,
+      "sent": false
+    }
+  ],
+  "createdAt": ISODate("2024-02-20T10:00:00Z"),
+  "updatedAt": ISODate("2024-02-25T14:30:00Z")
+}
+```
+
+---
+
+### 5. `userprogresses`
+
+Global progress tracking for resources. Progress is tracked per `(userId, resourceId)` pair, **not per instance**.
+
+#### Schema
+
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId,              // Reference to users
+  resourceId: ObjectId,          // Reference to resources
+  completed: Boolean,            // Completion status
+  completedAt: Date,             // When marked complete (null if not completed)
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### Indexes
+
+```javascript
+{ userId: 1 }                      // Find user's progress
+{ resourceId: 1 }                  // Find progress for a resource
+{ userId: 1, resourceId: 1 }       // unique - one progress per user per resource
+```
+
+**Reference**: `src/lib/db.js:60`
+
+#### Schema Validation
+
+**Location**: `src/lib/db.js:135`
+
+```javascript
+userProgress: (data) => ({
+  userId: toObjectId(data.userId),
+  resourceId: toObjectId(data.resourceId),
+  completed: data.completed || false,
+  completedAt: data.completed ? data.completedAt || new Date() : null,
+  createdAt: data.createdAt || new Date(),
+  updatedAt: new Date(),
+})
+```
+
+#### Global Progress Pattern
+
+Progress is **global across all instances**. If a user marks a resource complete in Instance A, it appears complete in Instance B as well.
+
+**Rationale**: Users shouldn't re-watch a video they've already completed just because they started a new instance.
+
+**Implementation**: `src/app/api/user-progress/route.js:75`
+
+```javascript
+// Progress is GLOBAL per user per resource (not per instance)
+const existingProgress = await userProgress.findOne({
+  userId: auth.user._id,
+  resourceId: resId,
+});
+```
+
+#### Sample Document
+
+```json
+{
+  "_id": ObjectId("507f1f77bcf86cd799439055"),
+  "userId": ObjectId("507f1f77bcf86cd799439011"),
+  "resourceId": ObjectId("507f1f77bcf86cd799439022"),
+  "completed": true,
+  "completedAt": ISODate("2024-02-22T15:45:00Z"),
+  "createdAt": ISODate("2024-02-21T09:00:00Z"),
+  "updatedAt": ISODate("2024-02-22T15:45:00Z")
+}
+```
+
+---
+
+## Relationships
+
+```
+users (1) ────────┐
+                  │
+                  ├──> (createdBy) studyplans (1)
+                  │                     │
+                  │                     │ (resourceIds)
+                  │                     ├──> resources (*)
+                  │                     │
+                  ├──> (userId) instances (*)
+                  │                     │
+                  │              (studyPlanId)
+                  │                     │
+                  └──> (userId) userprogresses (*)
+                                        │
+                                 (resourceId)
+                                        │
+                                   resources
+```
+
+## Helper Functions
+
+### ObjectId Conversion
+
+**Location**: `src/lib/db.js:25`
+
+```javascript
+export function toObjectId(id) {
+  if (!id) return null;
+  if (id instanceof ObjectId) return id;
+  if (ObjectId.isValid(id)) return new ObjectId(id);
+  return null;
+}
+```
+
+### Resource Duration Calculation
+
+**Location**: `src/lib/db.js:156`
+
+```javascript
+export function getResourceTotalTime(resource) {
+  if (resource.type === "youtube-video") {
+    return resource.metadata?.duration || 0;
+  } else if (resource.type === "pdf") {
+    return (resource.metadata?.pages || 0) * (resource.metadata?.minsPerPage || 0);
+  } else if (resource.type === "article" || resource.type === "google-drive" || resource.type === "custom-link") {
+    return resource.metadata?.estimatedMins || 0;
+  }
+  return 0;
+}
+```
+
+## Index Management
+
+Indexes are created automatically on application startup to ensure optimal query performance.
+
+**Location**: `src/lib/db.js:35`
+
+```javascript
+export async function ensureIndexes() {
+  const collections = await getCollections();
+
+  // Users indexes
+  await collections.users.createIndex({ firebaseUid: 1 }, { unique: true });
+  await collections.users.createIndex({ email: 1 }, { unique: true });
+
+  // Study Plans indexes
+  await collections.studyPlans.createIndex({ createdBy: 1 });
+  await collections.studyPlans.createIndex({ isPublic: 1 });
+  await collections.studyPlans.createIndex({ courseCode: 1 });
+  await collections.studyPlans.createIndex({ "sharedWith.userId": 1 });
+
+  // Instances indexes
+  await collections.instances.createIndex({ userId: 1 });
+  await collections.instances.createIndex({ studyPlanId: 1 });
+  await collections.instances.createIndex({ userId: 1, studyPlanId: 1 });
+
+  // Resources indexes
+  await collections.resources.createIndex({ url: 1 }, { unique: true });
+  await collections.resources.createIndex({ type: 1 });
+
+  // User Progress indexes
+  await collections.userProgress.createIndex({ userId: 1 });
+  await collections.userProgress.createIndex({ resourceId: 1 });
+  await collections.userProgress.createIndex(
+    { userId: 1, resourceId: 1 },
+    { unique: true }
+  );
+}
+```
+
+## Migration Considerations
+
+When adding new fields to existing documents:
+
+1. **Default values** are handled in schema validation functions
+2. **Optional fields** use `||` fallback patterns
+3. **Backward compatibility** is maintained (e.g., `instance.snapshotResourceIds || plan.resourceIds`)
+
+**Example**: `src/lib/auth.js:29`
+
+```javascript
+if (!user.role) {
+  await users.updateOne({ _id: user._id }, { $set: { role: "user" } });
+  user.role = "user";
+}
+```

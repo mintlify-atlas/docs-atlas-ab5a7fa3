@@ -1,0 +1,341 @@
+---
+title: Progress Tracking
+description: Monitor your learning journey with comprehensive progress metrics and analytics
+icon: chart-line
+---
+
+Study Sync provides robust progress tracking to help you understand your learning journey, stay motivated, and reach your goals.
+
+## Global Progress System
+
+Study Sync uses a **global progress model** that tracks completion at the user-resource level:
+
+<Info>
+**How It Works:** When you mark a resource as complete, that completion is recorded globally for your user account. This means if you mark a YouTube video complete in one instance, it appears complete in all instances that include that video.
+</Info>
+
+### Why Global Progress?
+
+<Tabs>
+  <Tab title="Benefits">
+    **Prevents Duplicate Work**
+    - Don't repeat resources across multiple instances
+    - Join different study groups using the same materials
+    - True reflection of what you've actually learned
+    
+    **Accurate Mastery Tracking**
+    - See which resources you've truly mastered
+    - Track overall learning across all your instances
+    - Build a complete picture of your knowledge
+    
+    **Simplified Management**
+    - One source of truth for completion status
+    - No need to track progress separately per instance
+    - Consistent experience across the platform
+  </Tab>
+  
+  <Tab title="How It's Different">
+    **Traditional Model (Per-Instance):**
+    - Video A marked complete in Instance 1
+    - Video A shows incomplete in Instance 2
+    - You must re-mark the same video multiple times
+    
+    **Study Sync Model (Global):**
+    - Video A marked complete once
+    - Automatically shows complete in all instances
+    - Reflects actual learning, not instance-specific progress
+    
+    <Note>
+    While completion is global, **instance-level metrics** (like overall percentage and time remaining) are still calculated per instance based on which resources are included.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Progress Metrics
+
+### Resource Completion
+
+Track which learning materials you've finished:
+
+**How to Mark Complete:**
+- Click "Mark Complete" button while viewing a resource
+- Completion persists immediately across all instances
+- Visual indicators show completed resources (green checkmark)
+
+**Completion Data:**
+- Completed status (true/false)
+- Completion timestamp (when you marked it complete)
+- Last accessed timestamp (most recent view)
+
+### Instance-Level Progress
+
+Each instance calculates its own progress metrics:
+
+<CardGroup cols={2}>
+  <Card title="Resource Progress" icon="check-circle">
+    **Completed Resources / Total Resources**
+    
+    - Counts how many resources are complete
+    - Displays as ratio (e.g., "12/20")
+    - Shown as percentage (e.g., "60%")
+    - Updates in real-time as you mark items complete
+  </Card>
+  
+  <Card title="Time Progress" icon="clock">
+    **Completed Time / Total Time**
+    
+    - Sums duration of completed resources
+    - Compares to total instance duration
+    - Percentage may differ from resource percentage
+    - Useful for time-based planning
+  </Card>
+</CardGroup>
+
+**Example:**
+```
+Instance: "CS101 Midterm Prep"
+Total Resources: 20 videos
+Completed Resources: 12 videos
+Resource Progress: 60%
+
+Total Time: 500 minutes
+Completed Time: 350 minutes
+Time Progress: 70%
+```
+
+<Info>
+Time progress can differ from resource progress because resources have different durations. Completing a few long videos may give you more time progress than resource progress.
+</Info>
+
+### Remaining Time
+
+Always know how much content is left:
+
+- **Calculation:** Total Time - Completed Time
+- **Display:** Formatted as hours and minutes (e.g., "2h 30m")
+- **Updates:** Automatically recalculates when you mark items complete
+- **Planning:** Helps you pace learning to meet deadlines
+
+## Visual Progress Indicators
+
+### Progress Bars
+
+Study Sync uses color-coded progress bars throughout the interface:
+
+**Instance Dashboard:**
+- **Resource Progress Bar:** Blue gradient showing completion percentage
+- **Time Progress Bar:** Purple gradient showing time percentage
+- Both bars animate smoothly as progress updates
+
+**Instance Header:**
+- Full-width progress bar at top of instance page
+- Blue-to-purple gradient visualization
+- Updates in real-time as you mark resources complete
+
+### Completion Icons
+
+<Accordion title="Icon System">
+  - **Green Checkmark:** Resource is complete
+  - **Empty Circle:** Resource is incomplete
+  - **Yellow Note:** Resource has notes attached
+  - **Play Icon:** Currently selected/playing resource
+</Accordion>
+
+### Text Indicators
+
+Numerical progress shown throughout:
+
+- Instance cards: "12/20 completed"
+- Instance header: "60%"
+- Playlist sidebar: "12 completed"
+- Remaining time: "2h 30m left"
+
+## Deadline Tracking
+
+Manage your study schedule with deadline features:
+
+### Setting Deadlines
+
+- Set when creating an instance
+- Update anytime from instance settings
+- Displayed on instance cards
+- Visual warnings as deadline approaches
+
+### Deadline Warnings
+
+<Steps>
+  <Step title="Green Status">
+    Deadline is more than a week away. Plenty of time to complete the instance.
+  </Step>
+  
+  <Step title="Yellow Warning">
+    Deadline is within a week. Time to accelerate your studying.
+  </Step>
+  
+  <Step title="Red Alert">
+    Deadline is today or past. Complete remaining resources urgently.
+  </Step>
+</Steps>
+
+### Deadline Calculation
+
+Study Sync helps you stay on track:
+
+- Shows days until deadline
+- Calculates required daily study time
+- Adjusts recommendations based on progress
+- Sends notifications as deadline approaches
+
+## Notes and Annotations
+
+### Resource Notes
+
+Take notes on individual resources:
+
+**Features:**
+- Per-resource note field
+- Auto-save as you type
+- Synced across all devices
+- Accessible from any instance containing that resource
+
+**Note Persistence:**
+- Notes survive resource completion
+- Available even if you remove resource from instance
+- Yellow sticky note icon indicates notes exist
+
+**Use Cases:**
+- Summarize key concepts
+- Record timestamps of important moments
+- Note questions for further research
+- Create flashcard-style study aids
+
+### Instance Notes
+
+General notes for the entire instance:
+
+- Free-form text field
+- Perfect for overall study goals
+- Track big-picture progress
+- Jot down exam dates or milestones
+
+## Progress Dashboard
+
+The `/instances` page shows all your active instances:
+
+### Instance Cards
+
+Each card displays:
+
+- **Instance Title:** Custom name or plan title
+- **Course Code:** Associated course
+- **Resource Progress:** Completed/total resources
+- **Time Progress:** Completed/total time
+- **Progress Bars:** Visual representation of both metrics
+- **Deadline:** Target completion date (if set)
+- **Last Accessed:** When you last studied
+
+### Sorting and Filtering
+
+- **By Recent:** Most recently accessed instances first
+- **By Deadline:** Upcoming deadlines appear first
+- **By Progress:** Instances closest to completion
+- **By Creation Date:** Newest instances first
+
+### Quick Actions
+
+- **Continue Learning:** Jump directly to instance
+- **Edit Instance:** Modify settings and resources
+- **Delete Instance:** Remove completed or unwanted instances
+
+## Completion Celebration
+
+When you finish an instance (100% resource progress):
+
+### Success Screen
+
+- Animated confetti celebration
+- Congratulations message
+- Summary of what you accomplished
+- Time spent on the instance
+- Encouragement to review or start new content
+
+### Post-Completion
+
+- Instance remains accessible for review
+- All notes preserved
+- Progress statistics saved
+- Can revisit resources anytime
+
+## Progress Analytics
+
+### Time-Based Metrics
+
+**Total Study Time:**
+- Sum of all completed resource durations
+- Tracked across all instances
+- Calculated automatically based on metadata
+
+**Average Daily Progress:**
+- Estimates based on instance creation and current progress
+- Helps predict completion date
+- Adjusts recommendations
+
+**Estimated Completion:**
+- Predicts when you'll finish based on current pace
+- Compares to deadline
+- Warns if you're behind schedule
+
+### Resource-Based Metrics
+
+**Completion Rate:**
+- Percentage of resources completed
+- Per instance and overall
+- Trends over time
+
+**Resource Type Breakdown:**
+- How many videos completed
+- How many PDFs read
+- How many articles consumed
+- Helps understand learning preferences
+
+## Best Practices
+
+### Regular Updates
+
+- Mark resources complete immediately after finishing
+- Update deadlines when plans change
+- Add notes while concepts are fresh
+- Review progress weekly
+
+### Honest Tracking
+
+- Only mark resources complete when truly finished
+- Use notes to track partial completion
+- Don't skip resources just to boost percentage
+- Quality learning over quantity metrics
+
+### Deadline Management
+
+- Set realistic deadlines with buffer time
+- Adjust if you fall behind (better than abandoning)
+- Break large instances into smaller chunks
+- Use deadlines as motivation, not stress
+
+### Leverage Global Progress
+
+- Join multiple study groups without extra work
+- Create focused instances knowing progress transfers
+- Review completed resources across instances
+- Track holistic learning across all plans
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Instances" icon="play" href="/features/instances">
+    Learn more about creating and managing instances
+  </Card>
+  
+  <Card title="Notifications" icon="bell" href="/features/notifications">
+    Set up reminders to stay on track
+  </Card>
+</CardGroup>

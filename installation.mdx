@@ -1,0 +1,526 @@
+---
+title: Installation Guide
+description: Complete setup instructions for Study Sync development environment with MongoDB, Firebase, and external APIs
+---
+
+# Installation & Setup
+
+This guide covers everything you need to set up Study Sync locally for development or deploy it to production.
+
+<Info>
+  **Prerequisites**: Basic knowledge of Next.js, MongoDB, and Firebase
+</Info>
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed and configured:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version 18 or higher**
+    
+    ```bash
+    node --version
+    # v18.0.0 or higher
+    ```
+  </Card>
+  
+  <Card title="Package Manager" icon="box">
+    One of:
+    - npm (comes with Node.js)
+    - yarn
+    - pnpm
+  </Card>
+  
+  <Card title="MongoDB" icon="database">
+    **MongoDB Atlas** (recommended) or local MongoDB 7.0+
+    
+    [Create free cluster →](https://www.mongodb.com/cloud/atlas/register)
+  </Card>
+  
+  <Card title="Firebase Project" icon="fire">
+    Google Firebase account with:
+    - Authentication enabled
+    - Service account key
+    
+    [Create project →](https://console.firebase.google.com/)
+  </Card>
+</CardGroup>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/AffanHossainRakib/study-sync.git
+    cd study-sync
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    ```bash
+    npm install
+    ```
+    
+    This installs all required packages:
+    
+    <CodeGroup>
+    ```json package.json (Frontend)
+    {
+      "dependencies": {
+        "next": "16.1.1",
+        "react": "19.2.3",
+        "react-dom": "19.2.3",
+        "firebase": "^12.7.0",
+        "mongodb": "^7.0.0",
+        "@dnd-kit/core": "^6.3.1",
+        "@dnd-kit/sortable": "^10.0.0",
+        "framer-motion": "^12.23.27",
+        "lucide-react": "^0.562.0",
+        "tailwindcss": "^4"
+      }
+    }
+    ```
+    
+    ```json package.json (Backend)
+    {
+      "dependencies": {
+        "firebase-admin": "^13.6.0",
+        "nodemailer": "^7.0.12",
+        "googleapis": "^169.0.0",
+        "@vercel/analytics": "^1.6.1",
+        "date-fns": "^4.1.0"
+      }
+    }
+    ```
+    </CodeGroup>
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Create a `.env.local` file in the root directory:
+    
+    ```bash
+    cp .env.example .env.local
+    ```
+    
+    <Warning>
+      Never commit `.env.local` to version control. It's already in `.gitignore`.
+    </Warning>
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+### Complete .env.local Setup
+
+<CodeGroup>
+```bash .env.local (Full Configuration)
+# ============================================
+# Frontend Environment Variables (Public)
+# ============================================
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Firebase Client Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# ============================================
+# Backend Environment Variables (Server-side)
+# ============================================
+
+# MongoDB Connection String
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/study_sync?retryWrites=true&w=majority
+
+# Firebase Admin SDK Service Account Key (Base64 Encoded)
+FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_encoded_service_account_key
+
+# YouTube Data API v3 Key (Optional)
+YOUTUBE_API_KEY=your_youtube_api_key
+
+# Gmail SMTP Configuration (Optional)
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+
+# ImgBB API Key for Image Uploads (Optional)
+NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
+```
+
+```bash .env.example (Template)
+# ============================================
+# Frontend Environment Variables (Public)
+# ============================================
+NEXT_PUBLIC_APP_URL=https://thestudysync.vercel.app
+
+# Firebase Client Configuration (Get from Firebase Console > Project Settings)
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# ============================================
+# Backend Environment Variables (Server-side)
+# ============================================
+
+# MongoDB Connection String
+# Get from MongoDB Atlas > Database > Connect > Drivers
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database_name?retryWrites=true&w=majority
+
+# Firebase Admin SDK Service Account Key (Base64 Encoded)
+# 1. Download serviceAccountKey.json from Firebase Console > Project Settings > Service Accounts
+# 2. Encode it to base64:
+#    Windows: [Convert]::ToBase64String([System.IO.File]::ReadAllBytes("serviceAccountKey.json"))
+#    Linux/Mac: base64 -w 0 serviceAccountKey.json
+FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_encoded_service_account_key
+
+# YouTube Data API v3 Key
+# Get from: https://console.cloud.google.com/apis/credentials
+# Enable YouTube Data API v3 first
+YOUTUBE_API_KEY=your_youtube_api_key
+
+# Gmail SMTP Configuration
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+
+# ImgBB API Key for Image Uploads
+# Get from: https://api.imgbb.com/
+NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
+```
+</CodeGroup>
+
+### Configuration Details
+
+#### MongoDB Setup
+
+<Steps>
+  <Step title="Create MongoDB Atlas Cluster">
+    1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+    2. Create a free cluster (M0 Sandbox)
+    3. Create a database user with read/write permissions
+    4. Whitelist your IP address (or use 0.0.0.0/0 for development)
+  </Step>
+  
+  <Step title="Get Connection String">
+    1. Click "Connect" on your cluster
+    2. Choose "Connect your application"
+    3. Copy the connection string
+    4. Replace `<username>`, `<password>`, and `<database_name>`
+    
+    ```bash
+    MONGODB_URI=mongodb+srv://myuser:mypassword123@cluster0.abc123.mongodb.net/study_sync?retryWrites=true&w=majority
+    ```
+  </Step>
+  
+  <Step title="Database Collections">
+    The application automatically creates these collections:
+    - `users`
+    - `resources`
+    - `studyplans`
+    - `instances`
+    - `userprogresses`
+  </Step>
+</Steps>
+
+#### Firebase Configuration
+
+<Steps>
+  <Step title="Create Firebase Project">
+    1. Go to [Firebase Console](https://console.firebase.google.com/)
+    2. Click "Add project"
+    3. Follow the setup wizard
+  </Step>
+  
+  <Step title="Enable Authentication">
+    1. In Firebase Console, go to **Authentication**
+    2. Click "Get Started"
+    3. Enable these sign-in methods:
+       - Email/Password
+       - Google (optional but recommended)
+  </Step>
+  
+  <Step title="Get Client Configuration">
+    1. Go to **Project Settings** (gear icon)
+    2. Scroll to "Your apps" section
+    3. Click the web app icon (`</>`)
+    4. Register your app and copy the config:
+    
+    ```javascript src/lib/firebase.js
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+    ```
+  </Step>
+  
+  <Step title="Generate Service Account Key">
+    1. Go to **Project Settings** → **Service Accounts**
+    2. Click "Generate new private key"
+    3. Save the JSON file as `serviceAccountKey.json`
+    4. Encode it to base64:
+    
+    <CodeGroup>
+    ```bash Linux/Mac
+    base64 -w 0 serviceAccountKey.json
+    ```
+    
+    ```powershell Windows
+    [Convert]::ToBase64String([System.IO.File]::ReadAllBytes("serviceAccountKey.json"))
+    ```
+    </CodeGroup>
+    
+    5. Add the base64 string to `.env.local`:
+    
+    ```bash
+    FIREBASE_SERVICE_ACCOUNT_KEY=ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsC...
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  **Security Note**: The service account key grants full admin access. Never commit it to version control or expose it publicly.
+</Warning>
+
+#### YouTube API Setup (Optional)
+
+<Steps>
+  <Step title="Enable YouTube Data API v3">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+    2. Create a new project or select existing
+    3. Navigate to **APIs & Services** → **Library**
+    4. Search for "YouTube Data API v3"
+    5. Click "Enable"
+  </Step>
+  
+  <Step title="Create API Key">
+    1. Go to **APIs & Services** → **Credentials**
+    2. Click "Create Credentials" → "API Key"
+    3. Copy the key and add to `.env.local`:
+    
+    ```bash
+    YOUTUBE_API_KEY=AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567
+    ```
+  </Step>
+  
+  <Step title="API Usage">
+    The YouTube API is used to fetch video metadata:
+    
+    ```javascript src/lib/youtube.js
+    import { google } from 'googleapis';
+
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: process.env.YOUTUBE_API_KEY,
+    });
+
+    // Fetch video details
+    const response = await youtube.videos.list({
+      part: ['snippet', 'contentDetails'],
+      id: [videoId],
+    });
+    ```
+    
+    <Info>
+      Without this API key, users can still add YouTube videos but must manually enter metadata.
+    </Info>
+  </Step>
+</Steps>
+
+#### Gmail SMTP Setup (Optional)
+
+<Steps>
+  <Step title="Enable 2-Factor Authentication">
+    1. Go to your [Google Account](https://myaccount.google.com/)
+    2. Navigate to **Security**
+    3. Enable **2-Step Verification**
+  </Step>
+  
+  <Step title="Generate App Password">
+    1. Go to **Security** → **2-Step Verification**
+    2. Scroll to **App passwords**
+    3. Select "Mail" and "Other (Custom name)"
+    4. Name it "Study Sync"
+    5. Copy the 16-character password
+  </Step>
+  
+  <Step title="Configure Nodemailer">
+    Add to `.env.local`:
+    
+    ```bash
+    GMAIL_USER=youremail@gmail.com
+    GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+    ```
+    
+    The email service configuration:
+    
+    ```javascript src/lib/email.js
+    import nodemailer from 'nodemailer';
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+    ```
+  </Step>
+</Steps>
+
+<Info>
+  Email notifications are optional. The app works fully without them, but users won't receive deadline reminders or daily study notifications.
+</Info>
+
+## Run Development Server
+
+<Steps>
+  <Step title="Start the Server">
+    ```bash
+    npm run dev
+    ```
+    
+    The application starts on `http://localhost:3000`
+  </Step>
+  
+  <Step title="Verify Setup">
+    Open your browser and check:
+    
+    - Homepage loads successfully
+    - You can create an account
+    - Firebase authentication works
+    - MongoDB connection is established (check terminal logs)
+  </Step>
+  
+  <Step title="Test API Endpoints">
+    Try creating a study plan to verify all integrations:
+    
+    ```bash
+    # Check health
+    curl http://localhost:3000/api/health
+    
+    # Create plan (requires authentication token)
+    curl -X POST http://localhost:3000/api/study-plans \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -d '{
+        "title": "Test Plan",
+        "shortDescription": "Testing setup",
+        "courseCode": "TEST101",
+        "isPublic": false
+      }'
+    ```
+  </Step>
+</Steps>
+
+## Project Structure
+
+```
+study-sync/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (auth)/            # Auth pages (login, register)
+│   │   ├── api/               # API routes
+│   │   │   ├── study-plans/   # Study plan CRUD
+│   │   │   ├── instances/     # Instance management
+│   │   │   ├── resources/     # Resource handling
+│   │   │   ├── user-progress/ # Progress tracking
+│   │   │   └── cron/          # Scheduled tasks
+│   │   ├── plans/             # Study plan pages
+│   │   ├── instances/         # Instance pages
+│   │   └── dashboard/         # User dashboard
+│   ├── components/            # React components
+│   │   ├── Auth/             # Authentication forms
+│   │   ├── ui/               # Reusable UI components
+│   │   └── Navbar.jsx        # Navigation
+│   ├── contexts/             # React contexts
+│   │   └── AuthContext.jsx   # Auth state management
+│   ├── lib/                  # Utilities
+│   │   ├── firebase.js       # Firebase client
+│   │   ├── firebase-admin.js # Firebase admin
+│   │   ├── mongodb.js        # MongoDB connection
+│   │   ├── youtube.js        # YouTube API
+│   │   └── email.js          # Email service
+│   └── hooks/                # Custom hooks
+├── public/                   # Static assets
+├── .env.local               # Environment variables (create this)
+├── .env.example             # Template
+├── package.json             # Dependencies
+├── next.config.mjs          # Next.js config
+└── tailwind.config.js       # Tailwind config
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="MongoDB Connection Error">
+    **Error**: `MongoServerError: bad auth : Authentication failed`
+    
+    **Solutions**:
+    1. Verify username and password in connection string
+    2. Check IP whitelist in MongoDB Atlas
+    3. Ensure database user has read/write permissions
+    4. Try encoding special characters in password
+  </Accordion>
+  
+  <Accordion title="Firebase Authentication Not Working">
+    **Error**: `Firebase: Error (auth/configuration-not-found)`
+    
+    **Solutions**:
+    1. Verify all `NEXT_PUBLIC_FIREBASE_*` variables are set
+    2. Check that Authentication is enabled in Firebase Console
+    3. Ensure you've enabled Email/Password sign-in method
+    4. Clear browser cache and cookies
+  </Accordion>
+  
+  <Accordion title="YouTube API Quota Exceeded">
+    **Error**: `quotaExceeded: The request cannot be completed because you have exceeded your quota`
+    
+    **Solutions**:
+    1. YouTube API has a free quota of 10,000 units/day
+    2. Each video metadata fetch costs ~3 units
+    3. Request quota increase in Google Cloud Console
+    4. Implement caching to reduce API calls
+  </Accordion>
+  
+  <Accordion title="Email Notifications Not Sending">
+    **Error**: `Error: Invalid login: 535-5.7.8 Username and Password not accepted`
+    
+    **Solutions**:
+    1. Ensure 2FA is enabled on your Google account
+    2. Generate a new App Password (not your regular password)
+    3. Remove spaces from the 16-character app password
+    4. Verify `GMAIL_USER` matches the account that generated the app password
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+    Create your first study plan and instance
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the REST API endpoints
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/configuration/environment">
+    Set up environment variables and services
+  </Card>
+  
+  <Card title="Database Schema" icon="database" href="/architecture/database-schema">
+    Understand the MongoDB collections
+  </Card>
+</CardGroup>
+
+---
+
+**Need help?** Check the [GitHub Issues](https://github.com/AffanHossainRakib/study-sync/issues) or create a new one.

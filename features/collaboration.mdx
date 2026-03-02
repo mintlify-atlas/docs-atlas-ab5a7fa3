@@ -1,0 +1,364 @@
+---
+title: Collaboration & Sharing
+description: Work together with classmates and study groups to share knowledge and resources
+icon: users
+---
+
+Study Sync is designed for collaborative learning. Share study plans, work with classmates, and build learning communities around your courses.
+
+## Sharing Study Plans
+
+Share your curated study plans with others to help them learn:
+
+<Steps>
+  <Step title="Open Your Study Plan">
+    Navigate to any study plan where you have edit permissions (creator or editor).
+  </Step>
+  
+  <Step title="Click Share">
+    Click the "Share" button on the plan details page to open the sharing dialog.
+  </Step>
+  
+  <Step title="Enter Email Address">
+    Type the email address of the person you want to share with. They don't need to be a Study Sync user yet.
+  </Step>
+  
+  <Step title="Select Role">
+    Choose their permission level:
+    - **Viewer:** Can view and create instances, but not edit
+    - **Editor:** Can view, create instances, and edit the plan
+  </Step>
+  
+  <Step title="Send Invitation">
+    Click "Share" to send an email invitation to the recipient.
+  </Step>
+</Steps>
+
+<Info>
+Recipients receive an email invitation with a link to the study plan. If they don't have a Study Sync account yet, they'll be prompted to create one.
+</Info>
+
+## Permission Roles
+
+### Owner
+
+The creator of a study plan has full control:
+
+<Accordion title="Owner Permissions">
+  - Edit plan title and description
+  - Add, remove, and reorder resources
+  - Change plan visibility (public/private)
+  - Share with viewers and editors
+  - Remove shared access from anyone
+  - Delete the study plan
+  - View all instances created from the plan
+</Accordion>
+
+### Editor
+
+Editors can modify the plan but not share it further:
+
+<Accordion title="Editor Permissions">
+  - Edit plan title and description
+  - Add, remove, and reorder resources
+  - Create instances from the plan
+  - View plan details and metadata
+  - Cannot change visibility settings
+  - Cannot share with others
+  - Cannot delete the plan
+</Accordion>
+
+<Note>
+Editors can make changes that affect everyone using the plan. Choose editors carefully and communicate before making major changes.
+</Note>
+
+### Viewer
+
+Viewers have read-only access:
+
+<Accordion title="Viewer Permissions">
+  - View plan details and resources
+  - Create instances from the plan
+  - Cannot edit any plan information
+  - Cannot share with others
+  - Cannot modify resources
+</Accordion>
+
+## Managing Shared Access
+
+### People with Access
+
+The sharing dialog shows everyone who can access the plan:
+
+**Owner Section:**
+- Displays plan creator
+- Shows their email
+- Marked with "Owner" badge
+- Cannot be removed
+
+**Shared Users Section:**
+- Lists all people with shared access
+- Shows email addresses
+- Displays role (Viewer or Editor)
+- Shows when access was granted
+- Remove button for each user (owner/editor only)
+
+### Removing Access
+
+Owners and editors can revoke shared access:
+
+1. Open the sharing dialog
+2. Find the user in the "People with access" list
+3. Click the trash icon next to their name
+4. Confirm the removal
+
+**What Happens:**
+- User immediately loses access to the plan
+- Plan disappears from their "My Plans" view
+- Existing instances they created remain accessible
+- They can no longer create new instances
+
+## Collaboration Workflows
+
+### Study Group Collaboration
+
+Perfect for group study sessions:
+
+<Steps>
+  <Step title="Create Shared Plan">
+    One group member creates the study plan with all resources.
+  </Step>
+  
+  <Step title="Share with Group">
+    Share the plan with all study group members as editors or viewers.
+  </Step>
+  
+  <Step title="Contribute Resources">
+    Editors can add resources they discover during studying.
+  </Step>
+  
+  <Step title="Individual Instances">
+    Each member creates their own instance to track personal progress.
+  </Step>
+  
+  <Step title="Group Review">
+    Meet regularly to discuss progress and help each other.
+  </Step>
+</Steps>
+
+### Instructor-Student Workflow
+
+Great for classroom settings:
+
+<Steps>
+  <Step title="Instructor Creates Plan">
+    Teacher builds comprehensive plan with course materials.
+  </Step>
+  
+  <Step title="Share with Students">
+    Share as viewer with all students via email.
+  </Step>
+  
+  <Step title="Students Create Instances">
+    Each student starts their own instance with custom deadlines.
+  </Step>
+  
+  <Step title="Progress Independently">
+    Students work through materials at their own pace.
+  </Step>
+  
+  <Step title="Instructor Updates">
+    Teacher adds new resources as course progresses.
+  </Step>
+</Steps>
+
+<Note>
+When instructors update shared plans, existing student instances are **not affected** because instances snapshot resources at creation time. Students would need to create new instances to get updated resources.
+</Note>
+
+### Peer Review Workflow
+
+Collaborate on plan quality:
+
+<Steps>
+  <Step title="Draft Creation">
+    Create initial study plan with basic resources.
+  </Step>
+  
+  <Step title="Share for Review">
+    Share with peers as editors to gather input.
+  </Step>
+  
+  <Step title="Collaborative Editing">
+    Editors refine resources, descriptions, and organization.
+  </Step>
+  
+  <Step title="Test Run">
+    All editors create instances to test the plan.
+  </Step>
+  
+  <Step title="Final Adjustments">
+    Make improvements based on testing.
+  </Step>
+  
+  <Step title="Publish">
+    Set to public and share broadly.
+  </Step>
+</Steps>
+
+## Public vs Private Plans
+
+<Tabs>
+  <Tab title="Public Plans">
+    ### Public Plans
+    
+    Visible to the entire Study Sync community:
+    
+    **Features:**
+    - Appear in the public plans library
+    - Searchable by all users
+    - Anyone can create instances
+    - Track instance count (popularity metric)
+    - Great for building reputation
+    
+    **Best For:**
+    - Widely-taken courses (CS101, Calculus I)
+    - Community knowledge sharing
+    - Building a portfolio of quality plans
+    - Helping students in popular courses
+    
+    **Considerations:**
+    - Cannot make private later (protect reversibility)
+    - Your name appears as creator
+    - Resource quality reflects on you
+    
+    <Info>
+    Public plans can still be shared with specific people who get edit permissions. "Public" just means anyone can view and create instances.
+    </Info>
+  </Tab>
+  
+  <Tab title="Private Plans">
+    ### Private Plans
+    
+    Only accessible to people you explicitly share with:
+    
+    **Features:**
+    - Not listed in public directory
+    - Only accessible via direct link + permissions
+    - Full control over who sees the plan
+    - Can make public later if desired
+    - Perfect for specialized content
+    
+    **Best For:**
+    - Personal study plans
+    - Small group collaboration
+    - Proprietary course content
+    - Work-in-progress plans
+    
+    **Considerations:**
+    - Lower instance counts (only shared users)
+    - Must manually share with each person
+    - Less community impact
+    
+    <Note>
+    Private plans can be made public at any time by the owner. Once public, they cannot be reverted to private.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Email Invitations
+
+When you share a plan, Study Sync sends an email invitation:
+
+### Email Contents
+
+- **Subject:** "[Name] shared a Study Sync plan with you"
+- **Plan Details:** Course code and title
+- **Shared By:** Who sent the invitation
+- **Role:** Your permission level
+- **Call to Action:** Link to view the plan
+
+### Recipient Experience
+
+**Existing User:**
+1. Clicks link in email
+2. Logs into Study Sync
+3. Plan appears in "My Plans" view
+4. Can immediately create an instance or edit (based on role)
+
+**New User:**
+1. Clicks link in email
+2. Prompted to create account
+3. After signup, automatically has access to shared plan
+4. Plan appears in "My Plans" view
+
+## Collaboration Best Practices
+
+### Communication
+
+- **Coordinate Changes:** Discuss major edits before making them
+- **Announce Updates:** Let shared users know about new resources
+- **Use Descriptions:** Keep plan description current
+- **Share Context:** Explain why resources are included
+
+### Resource Curation
+
+- **Quality Over Quantity:** Add valuable resources, not everything
+- **Verify URLs:** Ensure all links work before sharing
+- **Check Accessibility:** Resources should be available to all users
+- **Consider Audience:** Match resources to group skill level
+
+### Permission Management
+
+- **Start Restrictive:** Share as viewer, upgrade to editor if needed
+- **Review Regularly:** Audit who has access periodically
+- **Remove When Done:** Revoke access when collaboration ends
+- **Trust Editors:** Only give edit access to trustworthy collaborators
+
+### Instance Independence
+
+- **Create Own Instances:** Each person should have their own instance
+- **Customize Freely:** Edit instances without affecting others
+- **Respect Deadlines:** Set realistic deadlines for your pace
+- **Share Progress:** Discuss what's working in group sessions
+
+## Sharing Security
+
+### Email Privacy
+
+Study Sync protects user privacy:
+
+- Email addresses only visible to plan owners/editors
+- Viewers cannot see who else has access
+- No public display of user emails
+- Recipients can opt out of future invitations
+
+### Access Control
+
+- **Authentication Required:** Must be logged in to access shared plans
+- **Permission Checks:** Server validates permissions on every request
+- **Audit Trail:** Track who made changes and when
+- **Revocable Access:** Remove access instantly at any time
+
+### Data Protection
+
+- **Instance Privacy:** Your progress is private to you
+- **Note Privacy:** Your notes are never shared
+- **Plan Ownership:** Original creator retains ownership
+- **Deletion Rights:** Only owner can delete the plan
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Study Plans" icon="book-open" href="/features/study-plans">
+    Learn how to create shareable study plans
+  </Card>
+  
+  <Card title="Instances" icon="play" href="/features/instances">
+    Create personal instances from shared plans
+  </Card>
+  
+  <Card title="Notifications" icon="bell" href="/features/notifications">
+    Stay updated on shared plan changes
+  </Card>
+</CardGroup>

@@ -1,0 +1,470 @@
+---
+title: Study Plans API
+description: Create, manage, and share study plans
+---
+
+## Overview
+
+Study plans are the core organizational unit in Study Sync. They contain collections of learning resources organized for a specific course or topic.
+
+## List Study Plans
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/study-plans?view=public&page=1&limit=9" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/study-plans?view=public&page=1', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/study-plans`
+
+Get study plans based on view type and filters. Supports optional authentication.
+
+### Query Parameters
+
+<ParamField query="view" type="string" default="public">
+  Filter by view type:
+  - `public` - All public study plans
+  - `my` - User's own plans and plans shared with them (requires auth)
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search query to filter by title, short description, or full description
+</ParamField>
+
+<ParamField query="courseCode" type="string">
+  Filter by course code (case-insensitive partial match)
+</ParamField>
+
+<ParamField query="sort" type="string" default="newest">
+  Sort order:
+  - `newest` - Most recently created
+  - `popular` - Highest instance count
+  - `shortest` - Fewest resources
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination
+</ParamField>
+
+<ParamField query="limit" type="integer" default="9">
+  Number of plans per page
+</ParamField>
+
+### Response
+
+<ResponseField name="plans" type="array">
+  Array of study plan objects
+  
+  <Expandable title="Study Plan Object">
+    <ResponseField name="_id" type="string">
+      Unique plan identifier (24-char hex)
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Plan title
+    </ResponseField>
+    
+    <ResponseField name="shortDescription" type="string">
+      Brief description
+    </ResponseField>
+    
+    <ResponseField name="fullDescription" type="string">
+      Detailed description
+    </ResponseField>
+    
+    <ResponseField name="courseCode" type="string">
+      Course identifier (e.g., "CS101")
+    </ResponseField>
+    
+    <ResponseField name="isPublic" type="boolean">
+      Whether plan is publicly visible
+    </ResponseField>
+    
+    <ResponseField name="resourceIds" type="array">
+      Array of resource IDs in this plan
+    </ResponseField>
+    
+    <ResponseField name="createdBy" type="object">
+      Creator information
+      <Expandable title="Creator Object">
+        <ResponseField name="_id" type="string">User ID</ResponseField>
+        <ResponseField name="displayName" type="string">User's name</ResponseField>
+        <ResponseField name="email" type="string">User's email</ResponseField>
+        <ResponseField name="photoURL" type="string">Profile photo URL</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="totalTime" type="number">
+      Total estimated time in minutes
+    </ResponseField>
+    
+    <ResponseField name="resourceCount" type="number">
+      Number of resources in plan
+    </ResponseField>
+    
+    <ResponseField name="instanceCount" type="number">
+      Number of active instances
+    </ResponseField>
+    
+    <ResponseField name="viewCount" type="number">
+      Total views (public plans only)
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="pagination" type="object">
+  Pagination metadata
+  
+  <Expandable title="Pagination Object">
+    <ResponseField name="currentPage" type="number">Current page</ResponseField>
+    <ResponseField name="totalPages" type="number">Total pages</ResponseField>
+    <ResponseField name="totalPlans" type="number">Total plans matching filter</ResponseField>
+    <ResponseField name="hasNextPage" type="boolean">Whether next page exists</ResponseField>
+    <ResponseField name="hasPrevPage" type="boolean">Whether previous page exists</ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Create Study Plan
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://your-domain.com/api/study-plans" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Introduction to Algorithms",
+    "shortDescription": "Learn fundamental algorithms and data structures",
+    "fullDescription": "Comprehensive guide covering sorting, searching, and more",
+    "courseCode": "CS301",
+    "isPublic": true
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/study-plans', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    title: 'Introduction to Algorithms',
+    shortDescription: 'Learn fundamental algorithms',
+    courseCode: 'CS301',
+    isPublic: true
+  })
+});
+```
+</CodeGroup>
+
+`POST /api/study-plans`
+
+Create a new study plan. Requires authentication.
+
+### Request Body
+
+<ParamField body="title" type="string" required>
+  Plan title
+</ParamField>
+
+<ParamField body="shortDescription" type="string" required>
+  Brief description (shown in lists)
+</ParamField>
+
+<ParamField body="courseCode" type="string" required>
+  Course identifier (e.g., "CS101")
+</ParamField>
+
+<ParamField body="fullDescription" type="string">
+  Detailed description (optional)
+</ParamField>
+
+<ParamField body="isPublic" type="boolean" default={false}>
+  Whether plan should be publicly visible
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success message: "Study plan created successfully"
+</ResponseField>
+
+<ResponseField name="studyPlan" type="object">
+  The created study plan object with all fields
+</ResponseField>
+
+---
+
+## Get Study Plan
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/study-plans/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/study-plans/:id`
+
+Get a specific study plan by ID. Public plans don't require authentication.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Study plan ID (24-character hex string)
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="sortBy" type="string" default="order">
+  How to sort resources:
+  - `order` - Original order from plan
+  - `title` - Alphabetical by title
+  - `duration` - By estimated time
+  - `type` - By resource type
+</ParamField>
+
+### Response
+
+Returns the study plan object with populated resources and additional fields:
+
+<ResponseField name="resourceIds" type="array">
+  Full resource objects (not just IDs) in sorted order
+</ResponseField>
+
+<ResponseField name="totalTime" type="number">
+  Total estimated time in minutes
+</ResponseField>
+
+<ResponseField name="resourceCount" type="number">
+  Number of resources
+</ResponseField>
+
+<ResponseField name="canEdit" type="boolean">
+  Whether current user can edit this plan
+</ResponseField>
+
+---
+
+## Update Study Plan
+
+<CodeGroup>
+```bash cURL
+curl -X PUT "https://your-domain.com/api/study-plans/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Advanced Algorithms",
+    "isPublic": true,
+    "resourceIds": ["507f191e810c19729de860ea", "507f191e810c19729de860eb"]
+  }'
+```
+</CodeGroup>
+
+`PUT /api/study-plans/:id`
+
+Update a study plan. Requires edit permissions (creator or editor role).
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Study plan ID
+</ParamField>
+
+### Request Body
+
+All fields are optional. Only include fields you want to update.
+
+<ParamField body="title" type="string">
+  Plan title
+</ParamField>
+
+<ParamField body="shortDescription" type="string">
+  Brief description
+</ParamField>
+
+<ParamField body="fullDescription" type="string">
+  Detailed description
+</ParamField>
+
+<ParamField body="courseCode" type="string">
+  Course code
+</ParamField>
+
+<ParamField body="isPublic" type="boolean">
+  Public visibility
+</ParamField>
+
+<ParamField body="resourceIds" type="array">
+  Array of resource IDs (to reorder or modify resources)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Study plan updated successfully"
+</ResponseField>
+
+<ResponseField name="studyPlan" type="object">
+  Updated study plan object
+</ResponseField>
+
+---
+
+## Delete Study Plan
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "https://your-domain.com/api/study-plans/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`DELETE /api/study-plans/:id`
+
+Delete a study plan. Only the creator can delete.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Study plan ID
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Study plan deleted successfully"
+</ResponseField>
+
+---
+
+## Share Study Plan
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://your-domain.com/api/study-plans/507f1f77bcf86cd799439011/share" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "collaborator@example.com",
+    "role": "editor"
+  }'
+```
+</CodeGroup>
+
+`POST /api/study-plans/:id/share`
+
+Share a study plan with another user via email. Sends invitation email.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Study plan ID
+</ParamField>
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  Email address of person to share with
+</ParamField>
+
+<ParamField body="role" type="string" default="editor">
+  Access level:
+  - `viewer` - Can view only
+  - `editor` - Can edit and share
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Study plan shared successfully"
+</ResponseField>
+
+<ResponseField name="shared" type="object">
+  <Expandable title="Shared Access Object">
+    <ResponseField name="email" type="string">Recipient email</ResponseField>
+    <ResponseField name="role" type="string">Access role</ResponseField>
+    <ResponseField name="sharedAt" type="string">ISO timestamp</ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Remove Collaborator
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "https://your-domain.com/api/study-plans/507f1f77bcf86cd799439011/share/user@example.com" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`DELETE /api/study-plans/:id/share/:userId`
+
+Remove a collaborator's access. Can use either user ID or email address.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Study plan ID
+</ParamField>
+
+<ParamField path="userId" type="string" required>
+  User ID (24-char hex) or email address to remove
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Collaborator removed successfully"
+</ResponseField>
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "error": "Title, short description, and course code are required"
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+### 403 Forbidden
+
+```json
+{
+  "error": "You do not have permission to edit this study plan"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "Study plan not found"
+}
+```

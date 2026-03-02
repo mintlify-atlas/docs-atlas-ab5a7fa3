@@ -1,0 +1,147 @@
+---
+title: API Overview
+description: Complete API reference for Study Sync platform
+---
+
+## Introduction
+
+The Study Sync API provides programmatic access to all platform features including study plan management, resource tracking, user progress, and notifications. The API is RESTful, uses JSON for request and response bodies, and requires Firebase authentication.
+
+## Base URL
+
+```
+https://your-domain.com/api
+```
+
+## Authentication
+
+All API endpoints (except some GET endpoints marked as public) require authentication using Firebase ID tokens. Include the token in the `Authorization` header:
+
+```bash
+Authorization: Bearer YOUR_FIREBASE_ID_TOKEN
+```
+
+See the [Authentication](/api/authentication) page for detailed information.
+
+## Response Format
+
+All API responses follow a consistent JSON format:
+
+### Success Response
+
+```json
+{
+  "data": {
+    // Response data here
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Error message describing what went wrong"
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes:
+
+| Code | Description |
+|------|-------------|
+| `200` | Success - Request completed successfully |
+| `201` | Created - Resource created successfully |
+| `400` | Bad Request - Invalid request parameters |
+| `401` | Unauthorized - Missing or invalid authentication token |
+| `403` | Forbidden - Authenticated but lacking permissions |
+| `404` | Not Found - Resource doesn't exist |
+| `500` | Internal Server Error - Something went wrong on the server |
+
+## Common Error Codes
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+Common error messages:
+
+- `"No token provided"` - Missing Authorization header
+- `"Invalid or expired token"` - Firebase token is invalid or has expired
+- `"Access denied"` - User doesn't have permission to access the resource
+- `"Invalid study plan ID"` - Provided ID is not a valid MongoDB ObjectId
+- `"Study plan not found"` - Resource with the given ID doesn't exist
+
+## Rate Limiting
+
+Currently, there are no rate limits enforced. This may change in the future as the platform scales.
+
+## Pagination
+
+Endpoints that return lists support pagination through query parameters:
+
+<ParamField query="page" type="integer" default="1">
+  Page number to retrieve
+</ParamField>
+
+<ParamField query="limit" type="integer" default="9">
+  Number of items per page
+</ParamField>
+
+Paginated responses include metadata:
+
+```json
+{
+  "plans": [...],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalPlans": 42,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+## Object IDs
+
+Study Sync uses MongoDB ObjectIds for resource identification. Valid ObjectIds are 24-character hexadecimal strings.
+
+**Valid:** `507f1f77bcf86cd799439011`
+
+**Invalid:** `invalid-id`
+
+## API Endpoints
+
+### Study Plans
+
+- [Study Plans API](/api/study-plans) - Create, read, update, delete, and share study plans
+
+### Instances
+
+- [Instances API](/api/instances) - Manage user's active study plan instances
+
+### Resources
+
+- [Resources API](/api/resources) - Add and manage learning resources
+
+### User Progress
+
+- [User Progress API](/api/user-progress) - Track completion and progress
+
+### Users
+
+- [Users API](/api/users) - Manage user profiles
+
+### Notifications
+
+- [Notifications API](/api/notifications) - Manage notification settings
+
+## SDKs and Libraries
+
+Currently, there are no official SDKs. The API can be accessed using standard HTTP clients in any programming language.
+
+## Changelog
+
+API changes and updates will be documented here.

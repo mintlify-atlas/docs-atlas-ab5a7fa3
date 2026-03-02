@@ -1,0 +1,409 @@
+---
+title: Instances API
+description: Manage user study plan instances and track progress
+---
+
+## Overview
+
+Instances represent a user's active enrollment in a study plan. Each instance has its own schedule, reminders, and tracks completion independently. When created, instances snapshot the study plan's resources at that moment.
+
+## List Instances
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/instances?status=active" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/instances?status=active', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/instances`
+
+Get user's study plan instances. Requires authentication.
+
+### Query Parameters
+
+<ParamField query="status" type="string">
+  Filter by status:
+  - `active` - Currently active instances
+  - `completed` - Finished instances
+  - `paused` - Paused instances
+</ParamField>
+
+<ParamField query="studyPlanId" type="string">
+  Filter by specific study plan ID
+</ParamField>
+
+### Response
+
+<ResponseField name="instances" type="array">
+  Array of instance objects
+  
+  <Expandable title="Instance Object">
+    <ResponseField name="_id" type="string">
+      Instance ID
+    </ResponseField>
+    
+    <ResponseField name="userId" type="string">
+      User who owns this instance
+    </ResponseField>
+    
+    <ResponseField name="studyPlanId" type="string">
+      Associated study plan ID
+    </ResponseField>
+    
+    <ResponseField name="studyPlan" type="object">
+      Embedded study plan summary
+      <Expandable title="Study Plan Summary">
+        <ResponseField name="_id" type="string">Plan ID</ResponseField>
+        <ResponseField name="title" type="string">Plan title</ResponseField>
+        <ResponseField name="courseCode" type="string">Course code</ResponseField>
+        <ResponseField name="shortDescription" type="string">Brief description</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string">
+      ISO 8601 start date
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string">
+      ISO 8601 end date (deadline)
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Instance status: `active`, `completed`, or `paused`
+    </ResponseField>
+    
+    <ResponseField name="totalResources" type="number">
+      Total number of resources
+    </ResponseField>
+    
+    <ResponseField name="completedResources" type="number">
+      Number of completed resources
+    </ResponseField>
+    
+    <ResponseField name="totalTime" type="number">
+      Total estimated time in minutes
+    </ResponseField>
+    
+    <ResponseField name="completedTime" type="number">
+      Completed time in minutes
+    </ResponseField>
+    
+    <ResponseField name="remainingTime" type="number">
+      Remaining time in minutes
+    </ResponseField>
+    
+    <ResponseField name="resourcePercent" type="number">
+      Completion percentage by resource count
+    </ResponseField>
+    
+    <ResponseField name="timePercent" type="number">
+      Completion percentage by time
+    </ResponseField>
+    
+    <ResponseField name="reminderTime" type="string">
+      Daily reminder time (HH:MM format)
+    </ResponseField>
+    
+    <ResponseField name="reminderEnabled" type="boolean">
+      Whether reminders are enabled
+    </ResponseField>
+    
+    <ResponseField name="lastAccessedAt" type="string">
+      Last access timestamp
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Create Instance
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://your-domain.com/api/instances" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "studyPlanId": "507f1f77bcf86cd799439011",
+    "startDate": "2026-03-10T00:00:00Z",
+    "endDate": "2026-04-10T00:00:00Z",
+    "reminderTime": "09:00",
+    "resourceSchedule": []
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/instances', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    studyPlanId: '507f1f77bcf86cd799439011',
+    startDate: '2026-03-10T00:00:00Z',
+    endDate: '2026-04-10T00:00:00Z',
+    reminderTime: '09:00'
+  })
+});
+```
+</CodeGroup>
+
+`POST /api/instances`
+
+Create a new study plan instance. Snapshots the plan's resources at creation time.
+
+### Request Body
+
+<ParamField body="studyPlanId" type="string" required>
+  Study plan ID to create instance from
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Start date (ISO 8601 format)
+</ParamField>
+
+<ParamField body="endDate" type="string" required>
+  End date/deadline (ISO 8601 format). Must be after startDate.
+</ParamField>
+
+<ParamField body="reminderTime" type="string" default="09:00">
+  Daily reminder time in HH:MM format
+</ParamField>
+
+<ParamField body="resourceSchedule" type="array">
+  Optional resource scheduling information
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Instance created successfully"
+</ResponseField>
+
+<ResponseField name="instance" type="object">
+  The created instance object
+</ResponseField>
+
+---
+
+## Get Instance
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/instances/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/instances/:id`
+
+Get a specific instance with full details including resources and progress.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Instance ID
+</ParamField>
+
+### Response
+
+Returns the instance object with additional fields:
+
+<ResponseField name="resources" type="array">
+  Array of resource objects with completion status
+  
+  <Expandable title="Resource with Status">
+    <ResponseField name="completed" type="boolean">Whether user completed this resource</ResponseField>
+    <ResponseField name="completedAt" type="string">Completion timestamp (if completed)</ResponseField>
+    <ResponseField name="title" type="string">Resource title</ResponseField>
+    <ResponseField name="type" type="string">Resource type</ResponseField>
+    <ResponseField name="url" type="string">Resource URL</ResponseField>
+    <ResponseField name="metadata" type="object">Resource metadata</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="studyPlan" type="object">
+  Full study plan details including resources
+</ResponseField>
+
+---
+
+## Update Instance
+
+<CodeGroup>
+```bash cURL
+curl -X PUT "https://your-domain.com/api/instances/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "completed",
+    "notes": "Finished ahead of schedule!",
+    "reminderEnabled": false
+  }'
+```
+</CodeGroup>
+
+`PUT /api/instances/:id`
+
+Update an instance. Only the owner can update.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Instance ID
+</ParamField>
+
+### Request Body
+
+All fields are optional. Only include fields to update.
+
+<ParamField body="startDate" type="string">
+  Start date (ISO 8601)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  End date (ISO 8601)
+</ParamField>
+
+<ParamField body="status" type="string">
+  Status: `active`, `completed`, or `paused`
+</ParamField>
+
+<ParamField body="progress" type="number">
+  Progress percentage (0-100)
+</ParamField>
+
+<ParamField body="reminderTime" type="string">
+  Reminder time (HH:MM)
+</ParamField>
+
+<ParamField body="reminderEnabled" type="boolean">
+  Enable/disable reminders
+</ParamField>
+
+<ParamField body="customReminders" type="array">
+  Custom reminder schedule
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Instance notes
+</ParamField>
+
+<ParamField body="resourceNotes" type="object">
+  Per-resource notes as key-value pairs: `{ resourceId: "note text" }`
+</ParamField>
+
+<ParamField body="customTitles" type="object">
+  Custom resource titles
+</ParamField>
+
+<ParamField body="resourceIds" type="array">
+  Reorder/modify instance resources (uses snapshotResourceIds)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Instance updated successfully"
+</ResponseField>
+
+<ResponseField name="instance" type="object">
+  Updated instance object
+</ResponseField>
+
+---
+
+## Delete Instance
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "https://your-domain.com/api/instances/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`DELETE /api/instances/:id`
+
+Delete an instance. Only the owner can delete.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Instance ID
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Instance deleted successfully"
+</ResponseField>
+
+---
+
+## Key Concepts
+
+### Resource Snapshotting
+
+When an instance is created, it snapshots the study plan's resources at that moment:
+
+- Stored in `snapshotResourceIds` field
+- Independent of future study plan changes
+- Ensures instance stability even if plan is modified
+
+### Progress Tracking
+
+Progress is tracked globally per user per resource:
+
+- Completing a resource in one instance marks it complete everywhere
+- Use the [User Progress API](/api/user-progress) to manage completion status
+- Instance tracks which resources are completed via `completedResources` array
+
+### Automatic Updates
+
+The API automatically calculates:
+
+- `totalTime` and `completedTime` based on resource metadata
+- `resourcePercent` and `timePercent` for progress tracking
+- `remainingTime` for scheduling
+- `lastAccessedAt` when instance is viewed
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "error": "End date must be after start date"
+}
+```
+
+### 403 Forbidden
+
+```json
+{
+  "error": "You do not have permission to access this instance"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "Instance not found"
+}
+```

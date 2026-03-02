@@ -1,0 +1,337 @@
+---
+title: Firebase Setup
+description: Configure Firebase Authentication for Study Sync
+---
+
+Study Sync uses Firebase for user authentication and session management. This guide covers both client-side and server-side Firebase configuration.
+
+## Overview
+
+Firebase is configured in two parts:
+
+- **Client SDK** (`src/lib/firebase.js`) - Handles user authentication in the browser
+- **Admin SDK** (`src/lib/firebase-admin.js`) - Server-side authentication and user management
+
+## Prerequisites
+
+- Google/Firebase account
+- Firebase project created in [Firebase Console](https://console.firebase.google.com/)
+
+## Client-side Setup
+
+### Step 1: Create Firebase Project
+
+<Steps>
+  <Step title="Create new project">
+    Go to [Firebase Console](https://console.firebase.google.com/) and click "Add project".
+  </Step>
+  
+  <Step title="Enable Authentication">
+    Navigate to **Authentication** > **Sign-in method** and enable your desired providers:
+    - Email/Password
+    - Google
+    - GitHub
+    - Other providers as needed
+  </Step>
+  
+  <Step title="Register web app">
+    Go to **Project Settings** > **General** and click "Add app" > Web icon.
+  </Step>
+</Steps>
+
+### Step 2: Get Configuration Values
+
+In Firebase Console, go to **Project Settings** > **General** > **Your apps** section.
+
+Copy the Firebase configuration object values:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.firebasestorage.app",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123"
+};
+```
+
+### Step 3: Configure Environment Variables
+
+Add these to your `.env.local` file:
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
+```
+
+<Warning>
+  All Firebase client variables must be prefixed with `NEXT_PUBLIC_` to be accessible in the browser.
+</Warning>
+
+### Client Configuration Code
+
+The Firebase client is configured in `src/lib/firebase.js`:
+
+```javascript
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+// Validate that all required config values are present
+if (typeof window !== "undefined") {
+  const missingVars = Object.entries(firebaseConfig)
+    .filter(([key, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    console.error("Missing Firebase configuration variables:", missingVars);
+    console.error("Current config:", firebaseConfig);
+  }
+}
+
+// Initialize Firebase only if it hasn't been initialized already
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+
+export { app, auth };
+```
+
+## Server-side Setup (Admin SDK)
+
+The Firebase Admin SDK allows server-side operations like verifying ID tokens and managing users.
+
+### Step 1: Generate Service Account Key
+
+<Steps>
+  <Step title="Navigate to Service Accounts">
+    In Firebase Console, go to **Project Settings** > **Service Accounts**.
+  </Step>
+  
+  <Step title="Generate new key">
+    Click **"Generate new private key"** and confirm. This downloads a JSON file.
+  </Step>
+  
+  <Step title="Secure the file">
+    Store the `serviceAccountKey.json` file securely. Never commit it to version control.
+  </Step>
+</Steps>
+
+<Warning>
+  The service account key grants full admin access to your Firebase project. Keep it secure and never expose it publicly.
+</Warning>
+
+### Step 2: Encode Service Account Key
+
+The service account key must be base64-encoded to store as an environment variable:
+
+<Tabs>
+  <Tab title="Linux/Mac">
+    ```bash
+    base64 -w 0 serviceAccountKey.json
+    ```
+    
+    Copy the output (it will be a long string).
+  </Tab>
+  
+  <Tab title="Windows PowerShell">
+    ```powershell
+    [Convert]::ToBase64String([System.IO.File]::ReadAllBytes("serviceAccountKey.json"))
+    ```
+    
+    Copy the output from PowerShell.
+  </Tab>
+  
+  <Tab title="Node.js">
+    ```javascript
+    const fs = require('fs');
+    const key = fs.readFileSync('serviceAccountKey.json');
+    console.log(key.toString('base64'));
+    ```
+  </Tab>
+</Tabs>
+
+### Step 3: Set Environment Variable
+
+Add the base64-encoded key to `.env.local`:
+
+```bash
+FIREBASE_SERVICE_ACCOUNT_KEY=eyJ0eXBlIjoic2VydmljZV9hY2NvdW50IiwicHJvamVjdF9pZCI6InlvdXItcHJvamVjdCIsInByaXZhdGVfa2V5X2lkIjoiLi4uIn0=
+```
+
+<Warning>
+  This variable should NOT have the `NEXT_PUBLIC_` prefix as it must remain server-side only.
+</Warning>
+
+### Admin Configuration Code
+
+The Firebase Admin SDK is configured in `src/lib/firebase-admin.js`:
+
+```javascript
+import admin from "firebase-admin";
+
+/**
+ * Firebase Admin SDK Configuration for Next.js
+ * Initializes Firebase Admin with service account credentials
+ */
+
+if (!admin.apps.length) {
+  try {
+    const decoded = Buffer.from(
+      process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+      "base64"
+    ).toString("utf8");
+
+    const serviceAccount = JSON.parse(decoded);
+
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+
+    console.log("✅ Firebase Admin SDK initialized");
+  } catch (error) {
+    console.error("❌ Failed to initialize Firebase Admin SDK:", error.message);
+    throw error;
+  }
+}
+
+export default admin;
+```
+
+## Authentication Methods
+
+Study Sync supports multiple authentication providers:
+
+### Email/Password
+
+1. Enable in Firebase Console: **Authentication** > **Sign-in method** > **Email/Password**
+2. Toggle "Enable" and save
+
+### Google Sign-In
+
+1. Enable in Firebase Console: **Authentication** > **Sign-in method** > **Google**
+2. Toggle "Enable"
+3. Set project support email
+4. Save changes
+
+### GitHub Sign-In
+
+1. Create OAuth App in [GitHub Settings](https://github.com/settings/developers)
+2. Get Client ID and Client Secret
+3. Enable GitHub in Firebase Console
+4. Add Client ID and Secret
+5. Copy Authorization callback URL from Firebase and add to GitHub OAuth app
+
+## Security Rules
+
+Study Sync uses Firebase Authentication tokens for API route protection. Tokens are verified server-side using the Admin SDK.
+
+### Token Verification Example
+
+```javascript
+import admin from '@/lib/firebase-admin';
+
+export async function verifyIdToken(token) {
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    return { valid: true, uid: decodedToken.uid };
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+}
+```
+
+## Testing Configuration
+
+### Verify Client Setup
+
+1. Start your development server
+2. Open browser console
+3. Check for Firebase configuration errors
+4. If configured correctly, you should see no errors
+
+### Verify Admin Setup
+
+1. Check server logs when starting the application
+2. Look for: `✅ Firebase Admin SDK initialized`
+3. If you see errors, verify your base64-encoded key is correct
+
+## Troubleshooting
+
+### "Missing Firebase configuration variables"
+
+**Cause:** One or more `NEXT_PUBLIC_FIREBASE_*` variables are missing or empty.
+
+**Solution:** Verify all six client variables are set in `.env.local` and restart your dev server.
+
+### "Failed to initialize Firebase Admin SDK"
+
+**Cause:** Invalid or incorrectly encoded service account key.
+
+**Solutions:**
+1. Verify the base64 encoding is correct (no line breaks)
+2. Ensure the service account JSON is valid
+3. Check that the key hasn't been revoked in Firebase Console
+
+### "Firebase App already initialized"
+
+**Cause:** Hot reload in development can cause multiple initialization attempts.
+
+**Solution:** The code already handles this with `getApps().length === 0` check. If you still see issues, restart your dev server.
+
+### Authentication not working
+
+**Check:**
+1. Sign-in method is enabled in Firebase Console
+2. Authorized domains include your deployment domain (Project Settings > Authorized domains)
+3. Browser console for specific error messages
+
+## Production Deployment
+
+### Environment Variables
+
+Set all Firebase environment variables in your hosting platform:
+
+- Vercel: Project Settings > Environment Variables
+- Netlify: Site Settings > Environment Variables
+- Other platforms: Refer to platform documentation
+
+### Authorized Domains
+
+Add your production domain to Firebase authorized domains:
+
+1. Go to **Authentication** > **Settings** > **Authorized domains**
+2. Click "Add domain"
+3. Enter your production domain (e.g., `yourdomain.com`)
+
+<Warning>
+  Always use separate Firebase projects for development and production environments.
+</Warning>
+
+## Security Best Practices
+
+1. **Rotate service account keys** regularly (every 90 days recommended)
+2. **Use environment-specific projects** (dev, staging, production)
+3. **Enable App Check** for additional security
+4. **Monitor authentication logs** for suspicious activity
+5. **Set up billing alerts** to prevent quota abuse
+6. **Implement rate limiting** on sensitive operations
+
+## Resources
+
+- [Firebase Documentation](https://firebase.google.com/docs)
+- [Firebase Auth Setup](https://firebase.google.com/docs/auth/web/start)
+- [Admin SDK Setup](https://firebase.google.com/docs/admin/setup)
+- [Firebase Security Best Practices](https://firebase.google.com/docs/rules/best-practices)

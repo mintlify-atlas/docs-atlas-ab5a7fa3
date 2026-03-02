@@ -1,0 +1,171 @@
+---
+title: Welcome to Study Sync
+description: Your collaborative study management platform for creating, sharing, and tracking study plans with smart progress monitoring
+---
+
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.svg"
+  alt="Study Sync Hero Light"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.svg"
+  alt="Study Sync Hero Dark"
+/>
+
+# Transform the Way You Study
+
+Study Sync is a modern, collaborative study plan manager that helps students create structured learning paths, track progress across multiple resources, and achieve their academic goals through smart notifications and real-time analytics.
+
+<CardGroup cols={2}>
+  <Card
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get started in minutes - create your account and launch your first study plan
+  </Card>
+  <Card
+    title="Installation Guide"
+    icon="download"
+    href="/installation"
+  >
+    Complete setup instructions for development and production environments
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api/overview"
+  >
+    Explore the REST API endpoints for study plans, instances, and progress tracking
+  </Card>
+  <Card
+    title="Database Schema"
+    icon="database"
+    href="/architecture/database-schema"
+  >
+    Understand the MongoDB collections and data architecture
+  </Card>
+</CardGroup>
+
+## Why Study Sync?
+
+Study Sync combines the power of collaborative planning with intelligent progress tracking to create a comprehensive learning management experience.
+
+<CardGroup cols={3}>
+  <Card title="Multi-Source Resources" icon="video">
+    Integrate YouTube videos, PDFs, articles, and custom links with automatic metadata fetching
+  </Card>
+  <Card title="Smart Progress Tracking" icon="chart-line">
+    Track completion with dual metrics: resource-based and time-based progress
+  </Card>
+  <Card title="Collaborative Editing" icon="users">
+    Share study plans with collaborators and assign editor or viewer permissions
+  </Card>
+  <Card title="Custom Reminders" icon="bell">
+    Configure deadline notifications and daily study reminders via email
+  </Card>
+  <Card title="Instance System" icon="copy">
+    Create multiple personal instances from any study plan with independent tracking
+  </Card>
+  <Card title="Public Discovery" icon="globe">
+    Browse and start community-created public study plans
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### Study Plan Management
+
+Create structured study plans with curated resources from multiple sources. Plans can be public or private, and you can share them with collaborators who can edit or view based on assigned roles.
+
+<Info>
+  **Global Resource Pool**: Resources are stored once and referenced by ID, preventing duplication when the same resource appears in multiple plans.
+</Info>
+
+### Instance-Based Learning
+
+The instance system is what makes Study Sync unique. A **Study Plan** is a template containing curated resources, while an **Instance** is your personal copy with independent progress tracking.
+
+<Steps>
+  <Step title="Browse Plans">
+    Find public plans, your own plans, or plans shared with you
+  </Step>
+  <Step title="Start Instance">
+    Click "Start This Plan" to create a personal instance
+  </Step>
+  <Step title="Customize">
+    Set deadlines, add notes, and configure custom reminders
+  </Step>
+  <Step title="Track Progress">
+    Mark resources complete and watch your progress grow
+  </Step>
+</Steps>
+
+### Dual Progress Metrics
+
+Every instance tracks your progress in two complementary ways:
+
+- **Resource Progress**: X/Y resources completed with percentage (e.g., 5/10 resources = 50%)
+- **Time Progress**: X/Y minutes completed with percentage (e.g., 120/300 mins = 40%)
+
+<Note>
+  Progress is global per user per resource. When you mark a resource complete in one instance, it appears complete in all your instances containing that resource.
+</Note>
+
+## Tech Stack
+
+<CardGroup cols={2}>
+  <Card title="Frontend" icon="react">
+    - **Next.js 16.1.0** with App Router
+    - **React 19.2.3** with modern hooks
+    - **Tailwind CSS 4** for styling
+    - **Framer Motion 12** for animations
+    - **Radix UI** for accessible components
+  </Card>
+  <Card title="Backend" icon="server">
+    - **MongoDB 7.0.0** with native driver
+    - **Firebase Admin SDK** for authentication
+    - **Nodemailer** for email notifications
+    - **YouTube Data API v3** for video metadata
+    - **Vercel Cron** for scheduled tasks
+  </Card>
+</CardGroup>
+
+## Database Architecture
+
+Study Sync uses MongoDB with 5 main collections:
+
+| Collection | Purpose |
+|------------|----------|
+| `users` | User profiles and notification settings |
+| `resources` | Global resource pool (videos, PDFs, articles) |
+| `studyplans` | Study plan templates with metadata |
+| `instances` | Personal study instances with progress |
+| `userprogresses` | Global completion tracking per user per resource |
+
+<Warning>
+  The instance system snapshots resources at creation time, ensuring that changes to the original study plan don't affect existing instances.
+</Warning>
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Create Your First Plan" icon="plus" href="/quickstart#create-study-plan">
+    Learn how to build a study plan with multiple resource types
+  </Card>
+  <Card title="Set Up Development" icon="code" href="/installation">
+    Configure your local environment with MongoDB, Firebase, and API keys
+  </Card>
+  <Card title="Explore the API" icon="terminal" href="/api/overview">
+    Integrate Study Sync into your own applications
+  </Card>
+  <Card title="Understanding Progress" icon="graduation-cap" href="/features/progress-tracking">
+    Deep dive into global progress tracking and instance independence
+  </Card>
+</CardGroup>
+
+---
+
+**Made with love for students who want to study smarter, not harder.**

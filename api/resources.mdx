@@ -1,0 +1,442 @@
+---
+title: Resources API
+description: Manage learning resources in study plans
+---
+
+## Overview
+
+Resources are learning materials within study plans. Supported types include YouTube videos, playlists, PDFs, articles, Google Drive files, and custom links.
+
+## Resource Types
+
+- `youtube-video` - YouTube video with auto-fetched metadata
+- `youtube-playlist` - Expands into individual video resources
+- `pdf` - PDF document with page count
+- `article` - Web article with estimated reading time
+- `google-drive` - Google Drive file
+- `custom-link` - Generic URL
+
+## List Resources
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/resources?studyPlanId=507f1f77bcf86cd799439011&sortBy=order" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/resources`
+
+Get resources for a specific study plan.
+
+### Query Parameters
+
+<ParamField query="studyPlanId" type="string" required>
+  Study plan ID to fetch resources for
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="order">
+  Sort order:
+  - `order` - Plan's original order
+  - `title` - Alphabetical by title
+  - `duration` - By estimated time
+  - `type` - By resource type
+</ParamField>
+
+### Response
+
+<ResponseField name="resources" type="array">
+  Array of resource objects
+  
+  <Expandable title="Resource Object">
+    <ResponseField name="_id" type="string">
+      Resource ID
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Resource type: `youtube-video`, `pdf`, `article`, `google-drive`, `custom-link`
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Resource title
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      Resource URL
+    </ResponseField>
+    
+    <ResponseField name="metadata" type="object">
+      Type-specific metadata
+      
+      <Expandable title="YouTube Video Metadata">
+        <ResponseField name="duration" type="number">Duration in seconds</ResponseField>
+        <ResponseField name="videoId" type="string">YouTube video ID</ResponseField>
+        <ResponseField name="thumbnail" type="string">Thumbnail URL</ResponseField>
+      </Expandable>
+      
+      <Expandable title="PDF Metadata">
+        <ResponseField name="pages" type="number">Number of pages</ResponseField>
+        <ResponseField name="minsPerPage" type="number">Minutes per page (default 3)</ResponseField>
+      </Expandable>
+      
+      <Expandable title="Article Metadata">
+        <ResponseField name="estimatedMins" type="number">Estimated reading time</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="addedBy" type="string">
+      User ID who added this resource
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="sortBy" type="string">
+  Applied sort order
+</ResponseField>
+
+---
+
+## Create Resource
+
+<CodeGroup>
+```bash YouTube Video
+curl -X POST "https://your-domain.com/api/resources" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  }'
+```
+
+```bash PDF
+curl -X POST "https://your-domain.com/api/resources" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "pdf",
+    "title": "Algorithms Textbook",
+    "url": "https://example.com/textbook.pdf",
+    "pages": 450,
+    "minsPerPage": 3
+  }'
+```
+
+```bash Article
+curl -X POST "https://your-domain.com/api/resources" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "article",
+    "title": "Introduction to Binary Search",
+    "url": "https://example.com/article",
+    "estimatedMins": 10
+  }'
+```
+</CodeGroup>
+
+`POST /api/resources`
+
+Create a new resource. Type is auto-detected from URL if not specified.
+
+### Request Body
+
+<ParamField body="url" type="string" required>
+  Resource URL
+</ParamField>
+
+<ParamField body="type" type="string">
+  Resource type (auto-detected if omitted):
+  - `youtube-video` - Single YouTube video
+  - `youtube-playlist` - YouTube playlist (creates multiple resources)
+  - `pdf` - PDF document
+  - `article` - Web article
+  - `google-drive` - Google Drive file
+  - `custom-link` - Generic link
+</ParamField>
+
+<ParamField body="title" type="string">
+  Resource title (auto-fetched for YouTube, required for others)
+</ParamField>
+
+#### YouTube-specific
+
+<ParamField body="url" type="string" required>
+  YouTube video or playlist URL. Metadata is automatically fetched.
+</ParamField>
+
+#### PDF-specific
+
+<ParamField body="title" type="string" required>
+  PDF title
+</ParamField>
+
+<ParamField body="pages" type="number" required>
+  Number of pages
+</ParamField>
+
+<ParamField body="minsPerPage" type="number" default={3}>
+  Estimated minutes per page
+</ParamField>
+
+#### Article-specific
+
+<ParamField body="title" type="string" required>
+  Article title
+</ParamField>
+
+<ParamField body="estimatedMins" type="number" required>
+  Estimated reading time in minutes
+</ParamField>
+
+#### Google Drive / Custom Link
+
+<ParamField body="title" type="string">
+  Resource title (defaults to URL if omitted)
+</ParamField>
+
+<ParamField body="estimatedMins" type="number">
+  Optional estimated time
+</ParamField>
+
+### Response
+
+#### Single Resource
+
+<ResponseField name="message" type="string">
+  "Resource created successfully" or "Resource already exists"
+</ResponseField>
+
+<ResponseField name="resource" type="object">
+  The created resource object
+</ResponseField>
+
+<ResponseField name="isNew" type="boolean">
+  Whether resource was newly created or already existed
+</ResponseField>
+
+#### YouTube Playlist
+
+<ResponseField name="message" type="string">
+  Summary of created/existing resources
+</ResponseField>
+
+<ResponseField name="resources" type="array">
+  Array of video resource objects
+</ResponseField>
+
+<ResponseField name="newCount" type="number">
+  Number of newly created resources
+</ResponseField>
+
+<ResponseField name="existingCount" type="number">
+  Number of resources that already existed
+</ResponseField>
+
+---
+
+## Get Resource
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/resources/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/resources/:id`
+
+Get a specific resource by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Resource ID
+</ParamField>
+
+### Response
+
+Returns the resource object.
+
+---
+
+## Get Bulk Resources
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/resources/bulk?ids=507f1f77bcf86cd799439011,507f1f77bcf86cd799439012" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/resources/bulk`
+
+Get multiple resources by IDs.
+
+### Query Parameters
+
+<ParamField query="ids" type="string" required>
+  Comma-separated list of resource IDs
+</ParamField>
+
+### Response
+
+Returns array of resource objects with calculated `totalTime` field.
+
+---
+
+## Update Resource
+
+<CodeGroup>
+```bash cURL
+curl -X PUT "https://your-domain.com/api/resources/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated Title",
+    "metadata": { "estimatedMins": 15 }
+  }'
+```
+</CodeGroup>
+
+`PUT /api/resources/:id`
+
+Update a resource. Requires edit permissions on the associated study plan.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Resource ID
+</ParamField>
+
+### Request Body
+
+<ParamField body="title" type="string">
+  Resource title
+</ParamField>
+
+<ParamField body="url" type="string">
+  Resource URL
+</ParamField>
+
+<ParamField body="description" type="string">
+  Resource description
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Resource metadata
+</ParamField>
+
+<ParamField body="order" type="number">
+  Display order
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Resource updated successfully"
+</ResponseField>
+
+<ResponseField name="resource" type="object">
+  Updated resource object
+</ResponseField>
+
+---
+
+## Delete Resource
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "https://your-domain.com/api/resources/507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`DELETE /api/resources/:id`
+
+Delete a resource. Only the study plan creator can delete. Also removes the resource from the study plan's `resourceIds` array.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Resource ID
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Resource deleted successfully"
+</ResponseField>
+
+---
+
+## Automatic Metadata Fetching
+
+### YouTube Videos
+
+When creating a YouTube video resource, the API automatically:
+
+1. Extracts the video ID from the URL
+2. Fetches metadata using YouTube Data API
+3. Stores title, duration, thumbnail, and video ID
+
+### YouTube Playlists
+
+When creating a YouTube playlist resource:
+
+1. Extracts playlist ID from URL
+2. Fetches all videos in the playlist
+3. Creates individual `youtube-video` resources for each
+4. Returns array of created resources
+
+### Duplicate Detection
+
+The API checks for existing resources by URL to prevent duplicates:
+
+- Single resource: Returns existing resource if URL matches
+- Playlist: Reuses existing videos, only creates new ones
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "error": "URL is required"
+}
+```
+
+```json
+{
+  "error": "Title and pages are required for PDF"
+}
+```
+
+### 403 Forbidden
+
+```json
+{
+  "error": "You do not have permission to edit this resource"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "Resource not found"
+}
+```
+
+### 500 Internal Server Error
+
+```json
+{
+  "error": "Failed to fetch video metadata"
+}
+```

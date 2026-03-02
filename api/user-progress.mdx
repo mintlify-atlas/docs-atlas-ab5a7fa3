@@ -1,0 +1,395 @@
+---
+title: User Progress API
+description: Track resource completion and study progress
+---
+
+## Overview
+
+The User Progress API tracks completion status for learning resources. Progress is **global per user per resource** - when a resource is marked complete, it appears complete across all instances.
+
+## Key Concepts
+
+### Global Progress
+
+Progress is tracked globally, not per-instance:
+
+- Completing a resource in one study plan instance marks it complete everywhere
+- User can have multiple instances of the same plan, but resource completion is shared
+- Progress records store `userId` and `resourceId` (no `instanceId`)
+
+### Progress Fields
+
+- `completed` - Boolean completion status
+- `progress` - Numeric progress (0-100)
+- `timeSpent` - Time spent in minutes
+- `notes` - User notes on the resource
+- `completedAt` - Timestamp when marked complete
+- `lastAccessedAt` - Last interaction timestamp
+
+## Get User Progress
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/user-progress?resourceId=507f1f77bcf86cd799439011" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/user-progress', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/user-progress`
+
+Get user's progress records. Requires authentication.
+
+### Query Parameters
+
+<ParamField query="resourceId" type="string">
+  Filter by specific resource ID
+</ParamField>
+
+### Response
+
+<ResponseField name="progress" type="array">
+  Array of progress objects
+  
+  <Expandable title="Progress Object">
+    <ResponseField name="_id" type="string">
+      Progress record ID
+    </ResponseField>
+    
+    <ResponseField name="userId" type="string">
+      User ID
+    </ResponseField>
+    
+    <ResponseField name="resourceId" type="string">
+      Resource ID
+    </ResponseField>
+    
+    <ResponseField name="completed" type="boolean">
+      Whether resource is completed
+    </ResponseField>
+    
+    <ResponseField name="progress" type="number">
+      Progress percentage (0-100)
+    </ResponseField>
+    
+    <ResponseField name="timeSpent" type="number">
+      Time spent in minutes
+    </ResponseField>
+    
+    <ResponseField name="notes" type="string">
+      User notes
+    </ResponseField>
+    
+    <ResponseField name="completedAt" type="string">
+      ISO timestamp when completed (null if not completed)
+    </ResponseField>
+    
+    <ResponseField name="lastAccessedAt" type="string">
+      Last access timestamp
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Update Progress
+
+<CodeGroup>
+```bash Mark Complete
+curl -X POST "https://your-domain.com/api/user-progress" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instanceId": "507f1f77bcf86cd799439011",
+    "resourceId": "507f191e810c19729de860ea",
+    "completed": true,
+    "timeSpent": 45,
+    "notes": "Great explanation of quicksort!"
+  }'
+```
+
+```bash Update Progress
+curl -X POST "https://your-domain.com/api/user-progress" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instanceId": "507f1f77bcf86cd799439011",
+    "resourceId": "507f191e810c19729de860ea",
+    "progress": 75,
+    "timeSpent": 30
+  }'
+```
+</CodeGroup>
+
+`POST /api/user-progress`
+
+Create or update progress for a resource. Requires authentication.
+
+### Request Body
+
+<ParamField body="instanceId" type="string" required>
+  Instance ID (used for verification and updating instance's completedResources)
+</ParamField>
+
+<ParamField body="resourceId" type="string" required>
+  Resource ID
+</ParamField>
+
+<ParamField body="completed" type="boolean">
+  Mark as completed/incomplete
+</ParamField>
+
+<ParamField body="progress" type="number">
+  Progress percentage (0-100)
+</ParamField>
+
+<ParamField body="timeSpent" type="number">
+  Time spent in minutes
+</ParamField>
+
+<ParamField body="notes" type="string">
+  User notes about the resource
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Progress created successfully" or "Progress updated successfully"
+</ResponseField>
+
+<ResponseField name="progress" type="object">
+  The created/updated progress object
+</ResponseField>
+
+### Behavior
+
+- If progress record exists: Updates the existing record
+- If progress record doesn't exist: Creates new record
+- When `completed` changes from `false` to `true`: Sets `completedAt` timestamp
+- When `completed` changes from `true` to `false`: Clears `completedAt`
+- Updates instance's `completedResources` array accordingly
+- Always updates `lastAccessedAt` to current time
+
+---
+
+## Check Completion Status
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/user-progress/check?resourceIds=507f1f77bcf86cd799439011,507f191e810c19729de860ea" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/user-progress/check`
+
+Check completion status for multiple resources. Requires authentication.
+
+### Query Parameters
+
+<ParamField query="resourceIds" type="string" required>
+  Comma-separated list of resource IDs
+</ParamField>
+
+### Response
+
+Returns an object mapping resource IDs to completion status:
+
+```json
+{
+  "507f1f77bcf86cd799439011": {
+    "completed": true,
+    "completedAt": "2026-03-15T14:30:00Z"
+  },
+  "507f191e810c19729de860ea": {
+    "completed": false,
+    "completedAt": null
+  }
+}
+```
+
+<ResponseField name="[resourceId]" type="object">
+  Completion status for each resource
+  
+  <Expandable title="Status Object">
+    <ResponseField name="completed" type="boolean">
+      Whether resource is completed
+    </ResponseField>
+    
+    <ResponseField name="completedAt" type="string">
+      Completion timestamp (null if not completed)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Bulk Update
+
+<CodeGroup>
+```bash Mark Multiple Complete
+curl -X POST "https://your-domain.com/api/user-progress/bulk" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resourceIds": [
+      "507f1f77bcf86cd799439011",
+      "507f191e810c19729de860ea",
+      "507f191e810c19729de860eb"
+    ],
+    "completed": true
+  }'
+```
+
+```bash Mark Multiple Incomplete
+curl -X POST "https://your-domain.com/api/user-progress/bulk" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resourceIds": ["507f1f77bcf86cd799439011"],
+    "completed": false
+  }'
+```
+</CodeGroup>
+
+`POST /api/user-progress/bulk`
+
+Mark multiple resources as complete or incomplete. Requires authentication.
+
+### Request Body
+
+<ParamField body="resourceIds" type="array" required>
+  Array of resource IDs to update
+</ParamField>
+
+<ParamField body="completed" type="boolean" required>
+  Completion status to set for all resources
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Bulk update completed"
+</ResponseField>
+
+<ResponseField name="results" type="array">
+  Array of result objects for each resource
+  
+  <Expandable title="Result Object">
+    <ResponseField name="resourceId" type="string">
+      Resource ID that was processed
+    </ResponseField>
+    
+    <ResponseField name="success" type="boolean">
+      Whether update succeeded
+    </ResponseField>
+    
+    <ResponseField name="error" type="string">
+      Error message (only present if success is false)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+Example response:
+
+```json
+{
+  "message": "Bulk update completed",
+  "results": [
+    {
+      "resourceId": "507f1f77bcf86cd799439011",
+      "success": true
+    },
+    {
+      "resourceId": "invalid-id",
+      "success": false,
+      "error": "Invalid resource ID"
+    }
+  ]
+}
+```
+
+### Behavior
+
+- Creates progress records if they don't exist
+- Updates existing records
+- Sets `completedAt` timestamp when marking complete
+- Clears `completedAt` when marking incomplete
+- Processes all resources, returns individual success/failure for each
+
+---
+
+## Progress and Instances
+
+While progress is global, it affects instances:
+
+1. **Instance Creation**: New instance starts with no completed resources
+2. **Marking Complete**: Updates global progress AND adds to instance's `completedResources` array
+3. **Instance Queries**: Instance endpoints automatically populate completion status from global progress
+4. **Multiple Instances**: Same resource can appear in multiple instances, completion shared
+
+### Example Flow
+
+```javascript
+// User has two instances of the same study plan
+const instance1 = '507f1f77bcf86cd799439011';
+const instance2 = '507f1f77bcf86cd799439012';
+const resource = '507f191e810c19729de860ea';
+
+// Mark resource complete in instance1
+await fetch('/api/user-progress', {
+  method: 'POST',
+  body: JSON.stringify({
+    instanceId: instance1,
+    resourceId: resource,
+    completed: true
+  })
+});
+
+// Resource now appears complete in BOTH instances
+// because progress is global
+```
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "error": "Invalid instanceId or resourceId"
+}
+```
+
+```json
+{
+  "error": "resourceIds (array) and completed status are required"
+}
+```
+
+### 403 Forbidden
+
+```json
+{
+  "error": "You do not have permission to update this progress"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "Instance not found"
+}
+```

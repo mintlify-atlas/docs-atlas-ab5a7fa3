@@ -1,0 +1,220 @@
+---
+title: Environment Variables
+description: Configure environment variables for Study Sync
+---
+
+Study Sync uses environment variables to configure various services and integrations. This guide covers all required and optional environment variables.
+
+## Environment File Setup
+
+Create a `.env.local` file in the root of your project:
+
+<Steps>
+  <Step title="Copy example file">
+    Copy the `.env.example` file to `.env.local`:
+    ```bash
+    cp .env.example .env.local
+    ```
+  </Step>
+  
+  <Step title="Configure variables">
+    Open `.env.local` and update the placeholder values with your actual credentials.
+  </Step>
+  
+  <Step title="Verify configuration">
+    Ensure all required variables are set before starting the application.
+  </Step>
+</Steps>
+
+<Warning>
+  Never commit `.env.local` to version control. The `.gitignore` file should include this file by default.
+</Warning>
+
+## Frontend Variables (Public)
+
+These variables are prefixed with `NEXT_PUBLIC_` and are accessible in the browser.
+
+### Application URL
+
+```bash
+NEXT_PUBLIC_APP_URL=https://thestudysync.vercel.app
+```
+
+**Description:** The public URL where your application is hosted. Used for generating links in emails and sharing.
+
+**Default:** `http://localhost:3000` (development)
+
+### Firebase Client Configuration
+
+Required for Firebase Authentication on the client side. Get these values from Firebase Console > Project Settings > General.
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+See [Firebase Configuration](/configuration/firebase) for detailed setup instructions.
+
+### ImgBB API Key
+
+```bash
+NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
+```
+
+**Description:** API key for ImgBB image hosting service, used for uploading user avatars and images.
+
+**Get your key:** [https://api.imgbb.com/](https://api.imgbb.com/)
+
+## Backend Variables (Server-side)
+
+These variables are only accessible on the server and should never be exposed to the client.
+
+### MongoDB Connection
+
+```bash
+MONGDB_URI=mongodb+srv://username:password@cluster.mongodb.net/database_name?retryWrites=true&w=majority
+```
+
+**Description:** MongoDB Atlas connection string for database operations.
+
+**Format:** `mongodb+srv://<username>:<password>@<cluster>/<database>?retryWrites=true&w=majority`
+
+See [MongoDB Configuration](/configuration/mongodb) for detailed setup instructions.
+
+### Firebase Admin SDK
+
+```bash
+FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_encoded_service_account_key
+```
+
+**Description:** Base64-encoded Firebase Admin SDK service account key for server-side Firebase operations.
+
+**How to encode:**
+
+<Tabs>
+  <Tab title="Linux/Mac">
+    ```bash
+    base64 -w 0 serviceAccountKey.json
+    ```
+  </Tab>
+  
+  <Tab title="Windows PowerShell">
+    ```powershell
+    [Convert]::ToBase64String([System.IO.File]::ReadAllBytes("serviceAccountKey.json"))
+    ```
+  </Tab>
+</Tabs>
+
+See [Firebase Configuration](/configuration/firebase) for detailed setup instructions.
+
+### YouTube Data API
+
+```bash
+YOUTUBE_API_KEY=your_youtube_api_key
+```
+
+**Description:** YouTube Data API v3 key for fetching video and playlist metadata.
+
+**Get your key:** [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+
+See [YouTube API Configuration](/configuration/youtube-api) for detailed setup instructions.
+
+### Gmail SMTP
+
+```bash
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+```
+
+**Description:** Gmail credentials for sending notification emails and reminders.
+
+<Warning>
+  Use an App Password, not your regular Gmail password. App Passwords are more secure and work with 2FA.
+</Warning>
+
+See [Email Configuration](/configuration/email) for detailed setup instructions.
+
+## Validation
+
+Study Sync validates environment variables at runtime:
+
+### Client-side Validation
+
+From `src/lib/firebase.js:14-23`:
+
+```javascript
+if (typeof window !== "undefined") {
+  const missingVars = Object.entries(firebaseConfig)
+    .filter(([key, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    console.error("Missing Firebase configuration variables:", missingVars);
+    console.error("Current config:", firebaseConfig);
+  }
+}
+```
+
+### Server-side Validation
+
+From `src/lib/mongodb.js:8-10`:
+
+```javascript
+if (!process.env.MONGODB_URI) {
+  throw new Error("Please add your MONGODB_URI to .env.local");
+}
+```
+
+## Environment-specific Configuration
+
+### Development
+
+For local development, use `.env.local`:
+
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+# ... other variables
+```
+
+### Production
+
+For production deployment (Vercel, etc.), configure environment variables in your hosting platform:
+
+- **Vercel:** Project Settings > Environment Variables
+- **Netlify:** Site Settings > Build & Deploy > Environment
+- **Other platforms:** Refer to your platform's documentation
+
+<Warning>
+  Always use different credentials for development and production environments.
+</Warning>
+
+## Security Best Practices
+
+1. **Never commit secrets:** Ensure `.env.local` is in `.gitignore`
+2. **Use different keys:** Separate credentials for dev and production
+3. **Rotate regularly:** Change API keys and passwords periodically
+4. **Limit permissions:** Use service accounts with minimal required permissions
+5. **Monitor usage:** Track API usage to detect unauthorized access
+
+## Troubleshooting
+
+### Variables Not Loading
+
+If environment variables aren't loading:
+
+1. Restart your development server after changing `.env.local`
+2. Verify the file is named `.env.local` (not `.env`)
+3. Check that variables use the correct prefix (`NEXT_PUBLIC_` for client-side)
+4. Ensure no extra spaces around `=` in variable definitions
+
+### Firebase Configuration Errors
+
+Check the browser console for validation errors showing which Firebase variables are missing.
+
+### MongoDB Connection Failures
+
+Verify your connection string format and ensure your IP address is whitelisted in MongoDB Atlas.

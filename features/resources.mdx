@@ -1,0 +1,348 @@
+---
+title: Learning Resources
+description: Add and manage diverse learning materials in your study plans
+icon: folder
+---
+
+Resources are the learning materials that make up your study plans. Study Sync supports a wide variety of resource types, from video content to documents and custom links.
+
+## Global Resource Pool
+
+Study Sync uses a **global resource pool** architecture:
+
+<Info>
+**How It Works:** When you add a resource by URL, Study Sync checks if it already exists in the database. If it does, the existing resource is reused. If not, a new resource is created.
+
+This means the same YouTube video, PDF, or article can be used in multiple study plans without duplication.
+</Info>
+
+### Benefits
+
+- **Consistency:** The same resource has identical metadata everywhere
+- **Efficiency:** No duplicate storage of resource information
+- **Progress Tracking:** Global progress works because resources are globally unique
+- **Updates:** Metadata improvements benefit all plans using that resource
+
+## Supported Resource Types
+
+<Tabs>
+  <Tab title="YouTube Video">
+    ### YouTube Videos
+    
+    Add individual YouTube videos to your study plan.
+    
+    **How to Add:**
+    - Paste any YouTube video URL (youtube.com or youtu.be)
+    - Study Sync automatically fetches:
+      - Video title
+      - Duration (in minutes)
+      - Thumbnail image
+      - Video ID
+    
+    **Example URLs:**
+    ```
+    https://www.youtube.com/watch?v=dQw4w9WgXcQ
+    https://youtu.be/dQw4w9WgXcQ
+    ```
+    
+    **Features:**
+    - Embedded playback in the instance interface
+    - Automatic duration tracking
+    - No manual metadata entry required
+  </Tab>
+  
+  <Tab title="YouTube Playlist">
+    ### YouTube Playlists
+    
+    Import all videos from a YouTube playlist at once.
+    
+    **How to Add:**
+    - Paste a YouTube playlist URL
+    - All videos are imported as individual resources
+    - Each video gets its own metadata
+    
+    **Example URL:**
+    ```
+    https://www.youtube.com/playlist?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf
+    ```
+    
+    **Features:**
+    - Bulk import saves time
+    - Maintains playlist order
+    - Each video tracked individually
+    - Duplicate detection prevents re-adding videos
+    
+    <Note>
+    If a video from the playlist already exists in your plan, it will be skipped automatically.
+    </Note>
+  </Tab>
+  
+  <Tab title="PDF Document">
+    ### PDF Documents
+    
+    Add PDF files, textbooks, or papers.
+    
+    **How to Add:**
+    - Paste the URL to the PDF
+    - Enter required information:
+      - **Title:** Name of the document
+      - **Pages:** Total number of pages
+      - **Minutes per Page:** Reading speed (default: 3)
+    
+    **Time Calculation:**
+    ```
+    Total Time = Pages × Minutes per Page
+    ```
+    
+    **Example:**
+    - 50-page document
+    - 3 minutes per page
+    - Total time: 150 minutes (2.5 hours)
+    
+    **Adjust Reading Speed:**
+    - Technical content: 4-5 minutes per page
+    - Light reading: 2-3 minutes per page
+    - Dense textbooks: 5-7 minutes per page
+  </Tab>
+  
+  <Tab title="Article">
+    ### Articles & Blog Posts
+    
+    Add web articles, blog posts, or online documentation.
+    
+    **How to Add:**
+    - Paste the article URL
+    - Enter required information:
+      - **Title:** Article headline
+      - **Estimated Minutes:** Reading time
+    
+    **Tips for Estimation:**
+    - Average reading speed: 200-250 words per minute
+    - 1000-word article ≈ 4-5 minutes
+    - Include time for code examples or diagrams
+    
+    **Best For:**
+    - Blog tutorials
+    - Documentation pages
+    - Online course materials
+    - Research articles
+  </Tab>
+  
+  <Tab title="Google Drive">
+    ### Google Drive Links
+    
+    Share files hosted on Google Drive.
+    
+    **How to Add:**
+    - Paste a Google Drive share link
+    - Optionally provide:
+      - **Title:** Custom name for the resource
+      - **Estimated Minutes:** Time to complete
+    
+    **Permissions:**
+    Ensure the Google Drive file is set to "Anyone with the link can view" for students to access it.
+    
+    **Use Cases:**
+    - Lecture slides
+    - Shared documents
+    - Course materials
+    - Collaborative resources
+  </Tab>
+  
+  <Tab title="Custom Link">
+    ### Custom Links
+    
+    Add any other web-based learning resource.
+    
+    **How to Add:**
+    - Paste the URL
+    - **Title:** Required - name the resource
+    - **Estimated Minutes:** Optional time estimate
+    
+    **Examples:**
+    - Interactive coding exercises (CodePen, JSFiddle)
+    - Web-based simulations
+    - Online quizzes
+    - External learning platforms
+    - GitHub repositories
+    
+    <Note>
+    Custom links offer maximum flexibility for any web resource not covered by other types.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Adding Resources
+
+### In Study Plans
+
+When creating or editing a study plan:
+
+<Steps>
+  <Step title="Select Resource Type">
+    Choose the appropriate resource type from the dropdown menu.
+  </Step>
+  
+  <Step title="Enter URL">
+    Paste the resource URL. For YouTube videos, this is all you need.
+  </Step>
+  
+  <Step title="Provide Metadata (if required)">
+    Depending on the resource type, fill in:
+    - Title
+    - Page count
+    - Reading speed
+    - Estimated time
+  </Step>
+  
+  <Step title="Add to Plan">
+    Click "Add Resource" to include it in your study plan.
+  </Step>
+</Steps>
+
+### In Instances
+
+You can also add resources directly to instances:
+
+1. Enter edit mode in your instance
+2. Click the "Add" button
+3. Fill in the same information as above
+4. The resource is added to your instance only (not the original plan)
+
+<Info>
+Resources added to instances don't modify the original study plan. This allows personal customization without affecting others.
+</Info>
+
+## Resource Metadata
+
+Each resource includes important metadata:
+
+### Automatically Fetched
+- **YouTube Videos:** Title, duration, thumbnail, video ID
+- **YouTube Playlists:** Individual video metadata for each item
+
+### Manually Entered
+- **PDFs:** Title, pages, reading speed
+- **Articles:** Title, estimated reading time
+- **Google Drive:** Optional title and time
+- **Custom Links:** Title (required), optional time
+
+### System Metadata
+- **Type:** The resource category
+- **URL:** Link to the resource
+- **Added By:** User who created the resource
+- **Created At:** Timestamp of creation
+- **Updated At:** Last modification time
+
+## Organizing Resources
+
+### Reordering
+
+Change the sequence of resources to optimize learning flow:
+
+- **In Plans:** Drag and drop resources in the creation/edit interface
+- **In Instances:** Use edit mode to rearrange resources
+- **Order Matters:** Resources are presented in sequence during studying
+
+### Sorting Options
+
+On plan detail pages, sort resources by:
+
+<Accordion title="Sorting Methods">
+  - **Original Order:** As arranged by the plan creator
+  - **Title:** Alphabetically by resource name
+  - **Duration:** Shortest to longest
+  - **Type:** Grouped by resource category
+</Accordion>
+
+### Removing Resources
+
+- **From Plans:** Edit the plan and remove unwanted resources
+- **From Instances:** Use edit mode to delete resources from your instance
+- **From Pool:** Resources can't be deleted from the global pool (prevents breaking existing plans)
+
+## Resource Deduplication
+
+Study Sync automatically prevents duplicates:
+
+### URL-Based Detection
+- Resources are uniquely identified by URL
+- Adding the same URL twice reuses the existing resource
+- Applies to all resource types
+
+### Playlist Handling
+- When importing a playlist, each video is checked
+- Videos already in the plan are skipped
+- You're notified: "Added X videos, Y already in plan"
+
+### Cross-Plan Sharing
+- The same resource can appear in unlimited plans
+- Changes to resource metadata affect all instances
+- Progress tracking works across all uses
+
+## Resource Display
+
+Resources are displayed with visual indicators:
+
+### Type Icons
+- **YouTube:** Red play button icon
+- **PDF:** Blue document icon
+- **Article/Links:** Green link icon
+
+### Status Badges
+- Resource type label (colored badge)
+- Duration/time estimate
+- Completion status (in instances)
+- Note indicator (if notes exist)
+
+### Interactive Elements
+- Click to play/view in instance interface
+- External link button to open in new tab
+- Embedded player for supported types
+
+## Best Practices
+
+### Choose Appropriate Types
+- Use the most specific type available
+- YouTube videos auto-fetch metadata (easiest)
+- PDFs allow precise time calculation
+- Articles work for most web content
+- Custom links for everything else
+
+### Accurate Time Estimates
+Precise timing helps students:
+- Plan study sessions effectively
+- Meet deadlines realistically
+- Track progress meaningfully
+
+**Tips:**
+- Test resources before adding
+- Consider your target audience's skill level
+- Add buffer time for complex topics
+- Update estimates based on feedback
+
+### Resource Quality
+Curate high-quality materials:
+- Verify URLs are active and accessible
+- Check content relevance and accuracy
+- Ensure resources match learning objectives
+- Include diverse formats for engagement
+
+### Logical Sequencing
+Order resources thoughtfully:
+- Introduction → Fundamentals → Advanced
+- Theory → Practice → Application
+- Short → Long for sustained motivation
+- Mix types to maintain interest
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Study Plans" icon="book-open" href="/features/study-plans">
+    Learn how to organize resources into study plans
+  </Card>
+  
+  <Card title="Progress Tracking" icon="chart-line" href="/features/progress-tracking">
+    Track completion across all your resources
+  </Card>
+</CardGroup>

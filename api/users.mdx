@@ -1,0 +1,315 @@
+---
+title: Users API
+description: Manage user profiles and notifications
+---
+
+## Overview
+
+The Users API provides endpoints for managing user profiles and notifications. Users are automatically created when they first authenticate with a valid Firebase token.
+
+## Get Current User
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/users/me" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/users/me', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/users/me`
+
+Get the authenticated user's profile. Requires authentication.
+
+### Response
+
+<ResponseField name="user" type="object">
+  User profile object
+  
+  <Expandable title="User Object">
+    <ResponseField name="_id" type="string">
+      User ID
+    </ResponseField>
+    
+    <ResponseField name="firebaseUid" type="string">
+      Firebase user ID
+    </ResponseField>
+    
+    <ResponseField name="email" type="string">
+      User's email address
+    </ResponseField>
+    
+    <ResponseField name="displayName" type="string">
+      User's display name
+    </ResponseField>
+    
+    <ResponseField name="photoURL" type="string">
+      Profile photo URL
+    </ResponseField>
+    
+    <ResponseField name="role" type="string">
+      User role (e.g., "user", "admin")
+    </ResponseField>
+    
+    <ResponseField name="bio" type="string">
+      User biography
+    </ResponseField>
+    
+    <ResponseField name="preferences" type="object">
+      User preferences
+    </ResponseField>
+    
+    <ResponseField name="notificationSettings" type="object">
+      Notification settings (see Notifications API)
+    </ResponseField>
+    
+    <ResponseField name="notifications" type="array">
+      User notifications
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Account creation timestamp
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      Last update timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Update User Profile
+
+<CodeGroup>
+```bash cURL
+curl -X PUT "https://your-domain.com/api/users/me" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "John Doe",
+    "bio": "Computer Science student passionate about algorithms",
+    "preferences": {
+      "theme": "dark",
+      "emailDigest": true
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/users/me', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    displayName: 'John Doe',
+    bio: 'CS student',
+    preferences: { theme: 'dark' }
+  })
+});
+```
+</CodeGroup>
+
+`PUT /api/users/me`
+
+Update the authenticated user's profile. Requires authentication.
+
+### Request Body
+
+All fields are optional. Only include fields to update.
+
+<ParamField body="displayName" type="string">
+  User's display name
+</ParamField>
+
+<ParamField body="photoURL" type="string">
+  Profile photo URL
+</ParamField>
+
+<ParamField body="bio" type="string">
+  User biography
+</ParamField>
+
+<ParamField body="preferences" type="object">
+  User preferences (structure is flexible)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Profile updated successfully"
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  Updated user object
+</ResponseField>
+
+---
+
+## Get Notifications
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/users/me/notifications" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+`GET /api/users/me/notifications`
+
+Get user's in-app notifications, sorted by most recent first. Requires authentication.
+
+### Response
+
+<ResponseField name="notifications" type="array">
+  Array of notification objects, sorted by `createdAt` descending
+  
+  <Expandable title="Notification Object">
+    <ResponseField name="id" type="string">
+      Notification ID
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Notification type (e.g., "share", "deadline", "reminder")
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Notification title
+    </ResponseField>
+    
+    <ResponseField name="message" type="string">
+      Notification message
+    </ResponseField>
+    
+    <ResponseField name="read" type="boolean">
+      Whether notification has been read
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp
+    </ResponseField>
+    
+    <ResponseField name="metadata" type="object">
+      Additional notification data (optional)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Manage Notifications
+
+<CodeGroup>
+```bash Mark All Read
+curl -X PUT "https://your-domain.com/api/users/me/notifications" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "markAllRead"
+  }'
+```
+
+```bash Mark Specific Read
+curl -X PUT "https://your-domain.com/api/users/me/notifications" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "markRead",
+    "notificationIds": ["notif-123", "notif-456"]
+  }'
+```
+
+```bash Delete Notifications
+curl -X PUT "https://your-domain.com/api/users/me/notifications" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "delete",
+    "notificationIds": ["notif-123"]
+  }'
+```
+</CodeGroup>
+
+`PUT /api/users/me/notifications`
+
+Mark notifications as read or delete them. Requires authentication.
+
+### Request Body
+
+<ParamField body="action" type="string" required>
+  Action to perform:
+  - `markAllRead` - Mark all notifications as read
+  - `markRead` - Mark specific notifications as read (requires `notificationIds`)
+  - `delete` - Delete specific notifications (requires `notificationIds`)
+</ParamField>
+
+<ParamField body="notificationIds" type="array">
+  Array of notification IDs (required for `markRead` and `delete` actions)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success message:
+  - "All notifications marked as read"
+  - "Notifications marked as read"
+  - "Notifications deleted"
+</ResponseField>
+
+---
+
+## User Auto-Creation
+
+Users are automatically created on first authentication:
+
+1. User authenticates with Firebase
+2. API verifies Firebase token
+3. If user doesn't exist in database:
+   - Creates user with Firebase UID, email, display name, photo
+   - Sets default role to "user"
+   - Initializes default notification settings
+4. Returns user object
+
+This means you don't need a separate "sign up" endpoint - just authenticate with Firebase.
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "error": "No valid fields to update"
+}
+```
+
+```json
+{
+  "error": "Invalid action. Must be markRead, markAllRead, or delete"
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "No token provided"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "User not found"
+}
+```

@@ -1,0 +1,458 @@
+---
+title: YouTube API Setup
+description: Configure YouTube Data API v3 for fetching video metadata
+---
+
+Study Sync integrates with YouTube Data API v3 to automatically fetch video metadata, including titles, durations, and thumbnails for study materials.
+
+## Overview
+
+The YouTube integration allows users to:
+
+- Add individual videos by URL
+- Import entire playlists
+- Automatically extract video metadata (title, duration, thumbnail)
+- Track progress on video-based study materials
+
+**Configuration file:** `src/lib/youtube.js`
+
+## Prerequisites
+
+- Google Cloud Platform account
+- YouTube Data API v3 enabled
+
+## Setup Instructions
+
+<Steps>
+  <Step title="Create Google Cloud Project">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+    2. Click the project dropdown at the top
+    3. Click **"New Project"**
+    4. Enter project name (e.g., "Study Sync")
+    5. Click **"Create"**
+  </Step>
+  
+  <Step title="Enable YouTube Data API v3">
+    1. In your project, navigate to **APIs & Services** > **Library**
+    2. Search for "YouTube Data API v3"
+    3. Click on **YouTube Data API v3**
+    4. Click **"Enable"**
+    
+    <Warning>
+      You must enable the API before creating credentials, otherwise the API key won't work.
+    </Warning>
+  </Step>
+  
+  <Step title="Create API Key">
+    1. Navigate to **APIs & Services** > **Credentials**
+    2. Click **"Create Credentials"** > **"API key"**
+    3. A dialog will show your new API key
+    4. Click **"Edit API key"** to configure restrictions
+  </Step>
+  
+  <Step title="Restrict API Key (Recommended)">
+    For security, restrict your API key:
+    
+    **API Restrictions:**
+    1. Select **"Restrict key"**
+    2. Choose **"YouTube Data API v3"** from the dropdown
+    3. Save
+    
+    **Application Restrictions (Production):**
+    1. Choose **"HTTP referrers (web sites)"**
+    2. Add your production domain: `https://yourdomain.com/*`
+    3. For development, also add: `http://localhost:3000/*`
+    4. Save
+  </Step>
+  
+  <Step title="Configure Environment Variable">
+    Add the API key to your `.env.local` file:
+    
+    ```bash
+    YOUTUBE_API_KEY=AIzaSyD1234567890abcdefghijklmnopqrstuv
+    ```
+    
+    <Warning>
+      This is a server-side variable and should NOT have the `NEXT_PUBLIC_` prefix.
+    </Warning>
+  </Step>
+</Steps>
+
+## API Implementation
+
+The YouTube API service is implemented in `src/lib/youtube.js`:
+
+```javascript
+import { google } from "googleapis";
+
+/**
+ * YouTube API Service for Next.js
+ * Handles fetching video and playlist metadata from YouTube Data API v3
+ */
+
+const youtube = google.youtube({
+  version: "v3",
+  auth: process.env.YOUTUBE_API_KEY,
+});
+```
+
+## Supported URL Formats
+
+The API extracts video IDs from various YouTube URL formats:
+
+```javascript
+const patterns = [
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\n?#]+)/,
+  /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^&\n?#]+)/,
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^&\n?#]+)/,
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([^&\n?#]+)/,
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^&\n?#]+)/,
+  /^([a-zA-Z0-9_-]{11})$/, // Direct video ID
+];
+```
+
+### Examples of Supported URLs
+
+| Format | Example URL |
+|--------|-------------|
+| Standard | `https://www.youtube.com/watch?v=dQw4w9WgXcQ` |
+| Short URL | `https://youtu.be/dQw4w9WgXcQ` |
+| Embed | `https://www.youtube.com/embed/dQw4w9WgXcQ` |
+| Shorts | `https://www.youtube.com/shorts/dQw4w9WgXcQ` |
+| Video ID | `dQw4w9WgXcQ` |
+| Playlist | `https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxx` |
+
+## API Functions
+
+### Get Video Metadata
+
+Fetches metadata for a single video:
+
+```javascript
+export const getVideoMetadata = async (url) => {
+  try {
+    const videoId = extractVideoId(url);
+
+    if (!videoId) {
+      throw new Error("Invalid YouTube video URL");
+    }
+
+    const response = await youtube.videos.list({
+      part: ["snippet", "contentDetails"],
+      id: [videoId],
+    });
+
+    if (!response.data.items || response.data.items.length === 0) {
+      throw new Error("Video not found");
+    }
+
+    const video = response.data.items[0];
+    const duration = parseDuration(video.contentDetails.duration);
+
+    return {
+      videoId: video.id,
+      title: video.snippet.title,
+      duration: Math.round(duration),
+      thumbnailUrl:
+        video.snippet.thumbnails?.medium?.url ||
+        video.snippet.thumbnails?.default?.url ||
+        "",
+      url: `https://www.youtube.com/watch?v=${video.id}`,
+    };
+  } catch (error) {
+    console.error("YouTube API error (video):", error.message);
+    throw new Error(`Failed to fetch video metadata: ${error.message}`);
+  }
+};
+```
+
+**Returns:**
+```javascript
+{
+  videoId: "dQw4w9WgXcQ",
+  title: "Video Title",
+  duration: 213, // in minutes
+  thumbnailUrl: "https://i.ytimg.com/vi/...",
+  url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+}
+```
+
+### Get Playlist Videos
+
+Fetches all videos from a playlist:
+
+```javascript
+export const getPlaylistVideos = async (url) => {
+  try {
+    const playlistId = extractPlaylistId(url);
+
+    if (!playlistId) {
+      throw new Error("Invalid YouTube playlist URL");
+    }
+
+    const videos = [];
+    let nextPageToken = null;
+
+    do {
+      const response = await youtube.playlistItems.list({
+        part: ["contentDetails"],
+        playlistId: playlistId,
+        maxResults: 50,
+        pageToken: nextPageToken,
+      });
+
+      const videoIds = response.data.items.map(
+        (item) => item.contentDetails.videoId
+      );
+
+      const videosResponse = await youtube.videos.list({
+        part: ["snippet", "contentDetails"],
+        id: videoIds,
+      });
+
+      for (const video of videosResponse.data.items) {
+        const duration = parseDuration(video.contentDetails.duration);
+        videos.push({
+          videoId: video.id,
+          title: video.snippet.title,
+          duration: Math.round(duration),
+          thumbnailUrl:
+            video.snippet.thumbnails?.medium?.url ||
+            video.snippet.thumbnails?.default?.url ||
+            "",
+          url: `https://www.youtube.com/watch?v=${video.id}`,
+        });
+      }
+
+      nextPageToken = response.data.nextPageToken;
+    } while (nextPageToken);
+
+    return videos;
+  } catch (error) {
+    console.error("YouTube API error (playlist):", error.message);
+    throw new Error(`Failed to fetch playlist videos: ${error.message}`);
+  }
+};
+```
+
+**Features:**
+- Handles pagination automatically
+- Fetches up to 50 videos per request
+- Continues until all videos are retrieved
+
+### Duration Parsing
+
+Converts ISO 8601 duration format to minutes:
+
+```javascript
+const parseDuration = (isoDuration) => {
+  const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+
+  const hours = parseInt(match[1] || 0);
+  const minutes = parseInt(match[2] || 0);
+  const seconds = parseInt(match[3] || 0);
+
+  return hours * 60 + minutes + seconds / 60;
+};
+```
+
+**Examples:**
+- `PT15M33S` → 15.55 minutes
+- `PT1H30M` → 90 minutes
+- `PT45S` → 0.75 minutes
+
+## Usage Example
+
+Using the YouTube API in a Next.js API route:
+
+```javascript
+import { getVideoMetadata, getPlaylistVideos } from '@/lib/youtube';
+
+export default async function handler(req, res) {
+  const { url, type } = req.body;
+
+  try {
+    if (type === 'video') {
+      const metadata = await getVideoMetadata(url);
+      res.json({ success: true, data: metadata });
+    } else if (type === 'playlist') {
+      const videos = await getPlaylistVideos(url);
+      res.json({ success: true, data: videos, count: videos.length });
+    } else {
+      res.status(400).json({ error: 'Invalid type' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+```
+
+## API Quota Management
+
+YouTube Data API v3 has daily quota limits:
+
+### Default Quota
+- **Daily quota:** 10,000 units per day (free tier)
+- **Video metadata request:** ~3 units
+- **Playlist items request:** ~3 units per page (50 videos)
+
+### Cost Examples
+
+| Operation | Quota Cost | Daily Limit |
+|-----------|------------|-------------|
+| Fetch 1 video | ~3 units | ~3,333 videos |
+| Fetch 50-video playlist | ~6 units | ~1,666 playlists |
+| Fetch 500-video playlist | ~33 units | ~303 playlists |
+
+### Monitor Quota Usage
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Navigate to **APIs & Services** > **Dashboard**
+3. Click on **YouTube Data API v3**
+4. View **Quotas** tab for current usage
+
+### Request Quota Increase
+
+If you need higher limits:
+
+1. Go to **APIs & Services** > **YouTube Data API v3** > **Quotas**
+2. Click **"Apply for higher quota"**
+3. Fill out the quota increase request form
+4. Explain your use case and expected usage
+
+<Warning>
+  Monitor your quota usage regularly to avoid hitting limits during peak usage.
+</Warning>
+
+## Error Handling
+
+Common errors and solutions:
+
+### "Invalid YouTube video URL"
+
+**Cause:** URL format not recognized or invalid video ID.
+
+**Solution:** Verify the URL matches one of the supported formats.
+
+### "Video not found"
+
+**Cause:** Video is private, deleted, or ID is incorrect.
+
+**Solution:** Ensure the video is public and the URL is correct.
+
+### "Invalid YouTube playlist URL"
+
+**Cause:** Playlist URL doesn't contain a valid list parameter.
+
+**Solution:** Ensure URL includes `?list=` parameter.
+
+### "API key not valid"
+
+**Cause:** Invalid API key or API not enabled.
+
+**Solutions:**
+1. Verify `YOUTUBE_API_KEY` in `.env.local`
+2. Ensure YouTube Data API v3 is enabled in Google Cloud Console
+3. Check API key restrictions aren't blocking requests
+
+### "Quota exceeded"
+
+**Cause:** Daily quota limit reached.
+
+**Solutions:**
+1. Wait until quota resets (midnight Pacific Time)
+2. Request quota increase from Google
+3. Implement caching to reduce API calls
+
+## Optimization Tips
+
+### 1. Cache Results
+
+Store fetched metadata to avoid repeated API calls:
+
+```javascript
+// Store in MongoDB when first fetched
+const metadata = await getVideoMetadata(url);
+await db.collection('videoCache').insertOne({
+  videoId: metadata.videoId,
+  metadata,
+  cachedAt: new Date()
+});
+
+// Check cache before API call
+const cached = await db.collection('videoCache')
+  .findOne({ videoId });
+if (cached) return cached.metadata;
+```
+
+### 2. Batch Requests
+
+The API supports fetching multiple videos in one request:
+
+```javascript
+const response = await youtube.videos.list({
+  part: ["snippet", "contentDetails"],
+  id: ["videoId1", "videoId2", "videoId3"], // Up to 50 IDs
+});
+```
+
+### 3. Use Minimal Parts
+
+Only request needed data parts to reduce quota usage:
+
+```javascript
+// Good - only request what you need
+part: ["snippet", "contentDetails"]
+
+// Avoid - requesting unnecessary data
+part: ["snippet", "contentDetails", "statistics", "status"]
+```
+
+## Security Best Practices
+
+1. **Restrict API key:** Limit to YouTube Data API v3 only
+2. **Add referrer restrictions:** Limit to your domain
+3. **Server-side only:** Never expose API key in client code
+4. **Monitor usage:** Set up quota alerts in Google Cloud
+5. **Rotate keys:** Change API keys periodically
+6. **Use environment variables:** Never hardcode API keys
+
+## Testing
+
+### Test Video Metadata
+
+```javascript
+import { getVideoMetadata } from '@/lib/youtube';
+
+const testVideo = async () => {
+  try {
+    const metadata = await getVideoMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    console.log('✅ Video metadata:', metadata);
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  }
+};
+```
+
+### Test Playlist Import
+
+```javascript
+import { getPlaylistVideos } from '@/lib/youtube';
+
+const testPlaylist = async () => {
+  try {
+    const videos = await getPlaylistVideos('https://www.youtube.com/playlist?list=PLxxxxxx');
+    console.log(`✅ Fetched ${videos.length} videos from playlist`);
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  }
+};
+```
+
+## Resources
+
+- [YouTube Data API v3 Documentation](https://developers.google.com/youtube/v3)
+- [API Reference](https://developers.google.com/youtube/v3/docs)
+- [Quota Calculator](https://developers.google.com/youtube/v3/determine_quota_cost)
+- [googleapis Node.js Client](https://github.com/googleapis/google-api-nodejs-client)

@@ -1,0 +1,336 @@
+---
+title: Adding Resources
+description: Comprehensive guide to adding and managing learning resources
+---
+
+Resources are the building blocks of study plans in Study Sync. This guide covers everything you need to know about adding, formatting, and managing different types of learning materials.
+
+## Supported Resource Types
+
+Study Sync supports six types of learning resources:
+
+### YouTube Videos
+
+Individual videos from YouTube.
+
+**Required Information:**
+- Video URL (e.g., `https://www.youtube.com/watch?v=dQw4w9WgXcQ`)
+
+**Automatically Retrieved:**
+- Video title
+- Duration
+- Thumbnail
+
+**Best For:**
+- Lecture recordings
+- Tutorial videos
+- Demonstrations
+- Explanatory content
+
+### YouTube Playlists
+
+Entire playlists that get expanded into individual videos.
+
+**Required Information:**
+- Playlist URL (e.g., `https://www.youtube.com/playlist?list=PLxyz...`)
+
+**What Happens:**
+- System fetches all videos in the playlist
+- Each video becomes a separate resource
+- Existing videos are skipped (no duplicates)
+- Progress is tracked per video
+
+**Best For:**
+- Course lecture series
+- Multi-part tutorials
+- Topic deep-dives
+
+<Tip>
+  When adding playlists, Study Sync shows how many videos were added and how many were duplicates already in your plan.
+</Tip>
+
+### PDF Documents
+
+PDF files hosted anywhere on the web.
+
+**Required Information:**
+- PDF URL (must end in `.pdf` or be a direct PDF link)
+- Title
+- Number of pages
+- Minutes per page (default: 3)
+
+**Time Calculation:**
+```
+Total Time = Pages × Minutes Per Page
+```
+
+**Best For:**
+- Textbook chapters
+- Research papers
+- Study guides
+- Handouts and slides
+
+<Tip>
+  Adjust "minutes per page" based on content density. Technical papers might need 5-7 minutes per page, while lighter reading might be 2-3 minutes.
+</Tip>
+
+### Articles & Blog Posts
+
+Web-based written content.
+
+**Required Information:**
+- Article URL
+- Title
+- Estimated reading time (in minutes)
+
+**Best For:**
+- Blog posts
+- Online tutorials
+- Documentation pages
+- News articles
+- Medium posts
+
+<Tip>
+  To estimate reading time: Most people read 200-250 words per minute. Use browser word count extensions or estimate based on article length.
+</Tip>
+
+### Google Drive Links
+
+Files or folders stored in Google Drive.
+
+**Required Information:**
+- Google Drive share link
+- Title (optional, recommended)
+- Estimated time in minutes (optional)
+
+**Best For:**
+- Shared documents
+- Slide presentations
+- Spreadsheets
+- Instructor-provided materials
+
+<Warning>
+  Ensure Google Drive links are set to "Anyone with the link can view" or they won't be accessible to others using the study plan.
+</Warning>
+
+### Custom Links
+
+Any other web resource.
+
+**Required Information:**
+- URL
+- Title (required for custom links)
+- Estimated time in minutes (optional)
+
+**Best For:**
+- Interactive websites
+- Online tools and simulators
+- Web-based exercises
+- Course-specific platforms
+
+## Adding Resources to Study Plans
+
+<Steps>
+  <Step title="Open the Add Resource Form">
+    While creating or editing a study plan, locate the "Add Resource" section.
+  </Step>
+
+  <Step title="Select Resource Type">
+    Choose the appropriate type from the dropdown menu. The form will update to show relevant fields.
+  </Step>
+
+  <Step title="Enter the URL">
+    Paste the complete URL for your resource. Make sure it's accessible and not behind a paywall or login.
+  </Step>
+
+  <Step title="Fill in Details">
+    Depending on resource type, provide:
+    - Title (for PDFs, articles, custom links)
+    - Pages and minutes per page (for PDFs)
+    - Estimated time (for articles and custom links)
+  </Step>
+
+  <Step title="Add to Plan">
+    Click **Add Resource**. The resource will appear in your resource list below.
+  </Step>
+</Steps>
+
+## Resource Management
+
+### Reordering Resources
+
+1. After adding resources, use the drag handles to reorder
+2. Arrange from foundational to advanced
+3. Group related topics together
+4. Consider pacing and breaks
+
+### Removing Resources
+
+1. Click the trash icon next to any resource
+2. Confirm the deletion
+3. The resource is removed from the plan only (not deleted from the database)
+
+### Editing Resource Details
+
+In an instance:
+1. Enter edit mode
+2. Click on any resource title to rename it
+3. This creates a custom title for your instance only
+4. Original resource remains unchanged
+
+## Best Practices
+
+### Choosing Quality Resources
+
+<Tip>
+  **Verify Quality**: Before adding, watch/read at least the beginning to ensure it's relevant and well-produced.
+</Tip>
+
+<Tip>
+  **Check Dates**: Prefer recent content for rapidly evolving topics (programming, tech). Older content is fine for timeless subjects (math, history).
+</Tip>
+
+<Tip>
+  **Read Comments/Reviews**: For YouTube videos, check comments to gauge quality and identify issues.
+</Tip>
+
+### Structuring Your Resource List
+
+<Tip>
+  **Start with Overview**: Begin with a broad introduction or overview resource.
+</Tip>
+
+<Tip>
+  **Progressive Difficulty**: Arrange resources from beginner to advanced.
+</Tip>
+
+<Tip>
+  **Mix Media Types**: Alternate between videos, reading, and interactive content to maintain engagement.
+</Tip>
+
+<Tip>
+  **Include Practice**: Add resources for exercises, quizzes, or hands-on practice.
+</Tip>
+
+### Time Estimates
+
+<Tip>
+  **Be Conservative**: Estimate on the higher side. It's better to finish early than feel rushed.
+</Tip>
+
+<Tip>
+  **Account for Complexity**: Dense technical content takes longer than estimated duration.
+</Tip>
+
+<Tip>
+  **Include Buffer**: Add 20-30% extra time for note-taking and review.
+</Tip>
+
+## Handling Playlists
+
+When adding YouTube playlists:
+
+1. **Automatic Expansion**: All videos are added individually
+2. **Duplicate Detection**: Videos already in the plan are skipped
+3. **Order Preserved**: Videos maintain playlist order
+4. **Confirmation Message**: Shows count of added vs. duplicate videos
+
+<Warning>
+  Large playlists (50+ videos) can take a moment to process. Wait for the success message before adding more resources.
+</Warning>
+
+## Resource URLs and Accessibility
+
+### Valid URL Formats
+
+**YouTube Videos:**
+```
+https://www.youtube.com/watch?v=VIDEO_ID
+https://youtu.be/VIDEO_ID
+```
+
+**YouTube Playlists:**
+```
+https://www.youtube.com/playlist?list=PLAYLIST_ID
+```
+
+**PDFs:**
+```
+https://example.com/document.pdf
+https://drive.google.com/file/d/FILE_ID/view (Google Drive PDF)
+```
+
+**Articles:**
+```
+Any standard HTTP/HTTPS URL
+```
+
+### Ensuring Accessibility
+
+<Check>
+  Test each URL in an incognito/private browser window to ensure it doesn't require login.
+</Check>
+
+<Check>
+  For Google Drive files, use "Get Link" and set to "Anyone with the link can view".
+</Check>
+
+<Check>
+  Avoid paywalled content unless all users have access.
+</Check>
+
+## Common Issues and Solutions
+
+<AccordionGroup>
+  <Accordion title="YouTube video not fetching title">
+    - Check if the URL is correct
+    - Ensure the video is public (not private or unlisted)
+    - Try copying the URL directly from the browser address bar
+    - Wait a few seconds and try again (API rate limits)
+  </Accordion>
+
+  <Accordion title="PDF won't open">
+    - Verify the URL ends in `.pdf` or is a direct PDF link
+    - Check if the PDF requires login or subscription
+    - Test the URL in a private browser window
+    - For Google Drive PDFs, ensure sharing is enabled
+  </Accordion>
+
+  <Accordion title="Resource appears as duplicate">
+    - Study Sync prevents duplicate resources in the same plan
+    - This is based on URL matching
+    - If you need the same resource twice, it will only appear once
+    - For playlists, duplicate videos are automatically skipped
+  </Accordion>
+
+  <Accordion title="Can't estimate time for custom content">
+    - Use similar resources as a benchmark
+    - Test the content yourself and time it
+    - Default to conservative estimates (round up)
+    - You can always edit the instance later to adjust
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Tips
+
+### Creating Comprehensive Study Plans
+
+1. **Use a mix of formats**: 60% video, 30% reading, 10% interactive
+2. **Break long content**: Split 3-hour video playlists into logical sections
+3. **Add summaries**: Include recap/summary resources every 5-7 items
+4. **Include assessments**: Add quiz or practice problem resources
+
+### Optimizing for Different Learning Styles
+
+- **Visual Learners**: Prioritize video content and diagrams
+- **Reading/Writing Learners**: Include articles and PDFs
+- **Kinesthetic Learners**: Add interactive tools and exercises
+- **Auditory Learners**: Include video lectures and podcasts
+
+### Building Reusable Plans
+
+Create modular, reusable study plans:
+- Keep plans focused on specific topics
+- Use descriptive resource titles
+- Document prerequisites in the plan description
+- Make plans public to share with the community

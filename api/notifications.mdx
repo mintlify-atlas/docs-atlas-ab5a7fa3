@@ -1,0 +1,360 @@
+---
+title: Notifications API
+description: Manage notification settings and preferences
+---
+
+## Overview
+
+The Notifications API allows users to configure email reminders, deadline warnings, weekly digests, and custom reminder schedules for their study plans.
+
+## Get Notification Settings
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/notifications/settings" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/notifications/settings', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/notifications/settings`
+
+Get user's notification settings. Requires authentication.
+
+### Response
+
+<ResponseField name="settings" type="object">
+  Notification settings object
+  
+  <Expandable title="Settings Object">
+    <ResponseField name="emailReminders" type="boolean" default={true}>
+      Whether to send email reminders
+    </ResponseField>
+    
+    <ResponseField name="reminderTime" type="string" default="09:00">
+      Default reminder time in HH:MM format (24-hour)
+    </ResponseField>
+    
+    <ResponseField name="reminderFrequency" type="string" default="daily">
+      Reminder frequency:
+      - `daily` - Every day
+      - `weekdays` - Monday through Friday
+      - `custom` - Custom days (see `customDays`)
+    </ResponseField>
+    
+    <ResponseField name="customDays" type="array" default="[1,2,3,4,5]">
+      Array of weekday numbers (0=Sunday, 1=Monday, ..., 6=Saturday) for custom frequency
+    </ResponseField>
+    
+    <ResponseField name="deadlineWarnings" type="boolean" default={true}>
+      Whether to send deadline warning emails
+    </ResponseField>
+    
+    <ResponseField name="weeklyDigest" type="boolean" default={true}>
+      Whether to send weekly progress digest
+    </ResponseField>
+    
+    <ResponseField name="customReminders" type="array" default="[]">
+      Array of custom reminder objects
+      
+      <Expandable title="Custom Reminder">
+        <ResponseField name="time" type="string">Time in HH:MM format</ResponseField>
+        <ResponseField name="message" type="string">Custom reminder message</ResponseField>
+        <ResponseField name="days" type="array">Array of weekday numbers</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Default Settings
+
+If user hasn't customized settings, returns:
+
+```json
+{
+  "settings": {
+    "emailReminders": true,
+    "reminderTime": "09:00",
+    "reminderFrequency": "daily",
+    "customDays": [1, 2, 3, 4, 5],
+    "deadlineWarnings": true,
+    "weeklyDigest": true,
+    "customReminders": []
+  }
+}
+```
+
+---
+
+## Update Notification Settings
+
+<CodeGroup>
+```bash Update Basic Settings
+curl -X PUT "https://your-domain.com/api/notifications/settings" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "emailReminders": true,
+    "reminderTime": "08:30",
+    "reminderFrequency": "weekdays",
+    "deadlineWarnings": true,
+    "weeklyDigest": false
+  }'
+```
+
+```bash Custom Schedule
+curl -X PUT "https://your-domain.com/api/notifications/settings" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reminderFrequency": "custom",
+    "customDays": [1, 3, 5],
+    "reminderTime": "10:00"
+  }'
+```
+
+```bash Custom Reminders
+curl -X PUT "https://your-domain.com/api/notifications/settings" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customReminders": [
+      {
+        "time": "09:00",
+        "message": "Morning study session",
+        "days": [1, 2, 3, 4, 5]
+      },
+      {
+        "time": "18:00",
+        "message": "Evening review",
+        "days": [1, 3, 5]
+      }
+    ]
+  }'
+```
+</CodeGroup>
+
+`PUT /api/notifications/settings`
+
+Update notification settings. Requires authentication.
+
+### Request Body
+
+All fields are optional. Only include fields you want to update.
+
+<ParamField body="emailReminders" type="boolean">
+  Enable/disable email reminders
+</ParamField>
+
+<ParamField body="reminderTime" type="string">
+  Default reminder time in HH:MM format (24-hour time)
+  
+  Examples: `"09:00"`, `"14:30"`, `"18:45"`
+</ParamField>
+
+<ParamField body="reminderFrequency" type="string">
+  Reminder frequency:
+  - `"daily"` - Every day
+  - `"weekdays"` - Monday through Friday only
+  - `"custom"` - Custom days specified in `customDays`
+</ParamField>
+
+<ParamField body="customDays" type="array">
+  Array of weekday numbers for custom frequency:
+  - `0` = Sunday
+  - `1` = Monday
+  - `2` = Tuesday
+  - `3` = Wednesday
+  - `4` = Thursday
+  - `5` = Friday
+  - `6` = Saturday
+  
+  Example: `[1, 3, 5]` = Monday, Wednesday, Friday
+</ParamField>
+
+<ParamField body="deadlineWarnings" type="boolean">
+  Enable/disable deadline warning emails (sent when approaching instance end dates)
+</ParamField>
+
+<ParamField body="weeklyDigest" type="boolean">
+  Enable/disable weekly progress digest email
+</ParamField>
+
+<ParamField body="customReminders" type="array">
+  Array of custom reminder objects
+  
+  <Expandable title="Custom Reminder Object">
+    <ParamField body="time" type="string">
+      Reminder time in HH:MM format
+    </ParamField>
+    
+    <ParamField body="message" type="string">
+      Custom reminder message
+    </ParamField>
+    
+    <ParamField body="days" type="array">
+      Array of weekday numbers when this reminder should trigger
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  "Notification settings updated successfully"
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  Updated notification settings object
+</ResponseField>
+
+---
+
+## Notification Types
+
+### Email Reminders
+
+Daily/scheduled reminders about active study plan instances:
+
+- Sent at configured `reminderTime`
+- Frequency controlled by `reminderFrequency` and `customDays`
+- Can be disabled with `emailReminders: false`
+- Includes upcoming resources and progress summary
+
+### Deadline Warnings
+
+Warnings when instance end date is approaching:
+
+- Sent at predefined intervals (e.g., 7 days, 3 days, 1 day before)
+- Controlled by `deadlineWarnings` setting
+- Includes progress summary and remaining work
+
+### Weekly Digest
+
+Weekly summary of study progress:
+
+- Sent once per week
+- Controlled by `weeklyDigest` setting
+- Includes completion stats, time spent, and upcoming deadlines
+
+### Custom Reminders
+
+User-defined reminder schedule:
+
+- Multiple reminders at different times
+- Custom messages for each reminder
+- Specific days for each reminder
+- Stored in `customReminders` array
+
+### Share Notifications
+
+In-app notifications when study plans are shared:
+
+- Not configurable (always sent)
+- Appears in user's notifications list
+- Includes link to shared study plan
+
+---
+
+## Reminder Frequency Examples
+
+### Daily Reminders
+
+```json
+{
+  "reminderFrequency": "daily",
+  "reminderTime": "09:00"
+}
+```
+
+Sends reminder every day at 9:00 AM.
+
+### Weekday Reminders
+
+```json
+{
+  "reminderFrequency": "weekdays",
+  "reminderTime": "08:30"
+}
+```
+
+Sends reminder Monday-Friday at 8:30 AM.
+
+### Custom Schedule
+
+```json
+{
+  "reminderFrequency": "custom",
+  "customDays": [1, 3, 5],
+  "reminderTime": "10:00"
+}
+```
+
+Sends reminder Monday, Wednesday, Friday at 10:00 AM.
+
+### Multiple Custom Reminders
+
+```json
+{
+  "customReminders": [
+    {
+      "time": "09:00",
+      "message": "Morning study session",
+      "days": [1, 2, 3, 4, 5]
+    },
+    {
+      "time": "18:00",
+      "message": "Evening review",
+      "days": [0, 6]
+    }
+  ]
+}
+```
+
+Morning reminder on weekdays, evening reminder on weekends.
+
+---
+
+## Per-Instance Settings
+
+While global settings are managed here, individual instances can override:
+
+- `reminderTime` - Custom time for specific instance
+- `reminderEnabled` - Disable reminders for specific instance
+- `customReminders` - Instance-specific reminder schedule
+
+Use the [Instances API](/api/instances) to manage per-instance notification settings.
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+
+```json
+{
+  "error": "No valid fields to update"
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "No token provided"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "User not found"
+}
+```

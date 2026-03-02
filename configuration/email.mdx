@@ -1,0 +1,496 @@
+---
+title: Email Setup
+description: Configure Gmail SMTP for sending notification emails
+---
+
+Study Sync uses Gmail SMTP to send email notifications, including study reminders, deadline alerts, and sharing invitations.
+
+## Overview
+
+The email service is built with Nodemailer and supports:
+
+- Deadline reminder emails
+- Daily study reminders
+- Study plan sharing invitations
+- Custom reminder notifications
+- Test emails for configuration verification
+
+**Configuration file:** `src/lib/email.js`
+
+## Prerequisites
+
+- Gmail account
+- 2-Factor Authentication enabled (required for App Passwords)
+
+## Setup Instructions
+
+<Steps>
+  <Step title="Enable 2-Factor Authentication">
+    Gmail App Passwords require 2FA to be enabled on your account.
+    
+    1. Go to [Google Account Security](https://myaccount.google.com/security)
+    2. Under "Signing in to Google", click **"2-Step Verification"**
+    3. Follow the setup process to enable 2FA
+    4. Verify it's working by signing in with 2FA
+    
+    <Warning>
+      You cannot create App Passwords without 2-Factor Authentication enabled.
+    </Warning>
+  </Step>
+  
+  <Step title="Generate App Password">
+    1. Go to [Google App Passwords](https://myaccount.google.com/apppasswords)
+    2. You may need to sign in again
+    3. Under "Select app", choose **"Mail"**
+    4. Under "Select device", choose **"Other (Custom name)"**
+    5. Enter a name like "Study Sync" or "Study Sync Dev"
+    6. Click **"Generate"**
+    7. Copy the 16-character password (shown without spaces)
+    
+    <Warning>
+      Save this password immediately. Google will only show it once. If you lose it, you'll need to generate a new one.
+    </Warning>
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Add your Gmail credentials to `.env.local`:
+    
+    ```bash
+    GMAIL_USER=your-email@gmail.com
+    GMAIL_APP_PASSWORD=abcdefghijklmnop
+    ```
+    
+    **Important:**
+    - Use the App Password, not your regular Gmail password
+    - The App Password is 16 characters with no spaces
+    - These are server-side variables (no `NEXT_PUBLIC_` prefix)
+  </Step>
+  
+  <Step title="Verify Configuration">
+    Test your email configuration by sending a test email through the application or API.
+  </Step>
+</Steps>
+
+## Email Service Implementation
+
+The email service is implemented in `src/lib/email.js`:
+
+```javascript
+import nodemailer from "nodemailer";
+
+/**
+ * Email service using Gmail SMTP
+ * For sending reminder emails and notifications
+ */
+
+// Gmail SMTP transporter
+const gmailTransporter =
+  process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
+    ? nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD,
+        },
+      })
+    : null;
+```
+
+### Graceful Degradation
+
+The service gracefully handles missing configuration:
+
+```javascript
+export async function sendReminderEmail(to, subject, htmlContent) {
+  if (!gmailTransporter) {
+    console.warn("Gmail not configured, skipping email send");
+    return { success: false, message: "Email service not configured" };
+  }
+
+  try {
+    const info = await gmailTransporter.sendMail({
+      from: `The Study Sync <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      html: htmlContent,
+    });
+    console.log("Email sent via Gmail:", info.messageId);
+    return { success: true, data: info };
+  } catch (error) {
+    console.error("Gmail send error:", error);
+    return { success: false, error: error.message };
+  }
+}
+```
+
+## Email Templates
+
+Study Sync includes several pre-built email templates:
+
+### 1. Test Email
+
+Verify email configuration:
+
+```javascript
+import { sendTestEmail } from '@/lib/email';
+
+const result = await sendTestEmail('user@example.com');
+```
+
+Sends a simple test message to verify SMTP configuration is working.
+
+### 2. Deadline Reminder
+
+Notify users about approaching deadlines:
+
+```javascript
+import { sendDeadlineReminder } from '@/lib/email';
+
+const instanceData = {
+  customTitle: "JavaScript Course",
+  studyPlanTitle: "Web Development",
+  deadline: new Date('2026-03-15'),
+  id: 'instance123'
+};
+
+const result = await sendDeadlineReminder('user@example.com', instanceData);
+```
+
+**Email includes:**
+- Study plan title
+- Deadline date
+- Link to view study plan
+- Styled HTML template
+
+### 3. Daily Reminder
+
+Encourage daily study habits:
+
+```javascript
+import { sendDailyReminder } from '@/lib/email';
+
+const result = await sendDailyReminder(
+  'user@example.com',
+  'John Doe',
+  3 // number of active instances
+);
+```
+
+**Email includes:**
+- Personalized greeting
+- Count of active study plans
+- Link to view all instances
+
+### 4. Share Invitation
+
+Notify users when a study plan is shared with them:
+
+```javascript
+import { sendShareInvitation } from '@/lib/email';
+
+const result = await sendShareInvitation(
+  'collaborator@example.com',
+  'Jane Smith', // sharer's name
+  'Advanced React Patterns', // plan title
+  'plan123', // plan ID
+  'editor' // role: 'viewer' or 'editor'
+);
+```
+
+**Email includes:**
+- Sharer's name
+- Study plan title
+- Access level (viewer/editor)
+- Link to study plan
+
+### 5. Custom Reminder
+
+User-configured reminder notifications:
+
+```javascript
+import { sendCustomReminder } from '@/lib/email';
+
+const instanceData = {
+  customTitle: "Python Bootcamp",
+  studyPlanTitle: "Programming",
+  deadline: new Date('2026-03-20'),
+  _id: 'instance456'
+};
+
+const result = await sendCustomReminder(
+  'user@example.com',
+  instanceData,
+  '1 day' // reminder type: "1 day before", "2 hours before", etc.
+);
+```
+
+**Email includes:**
+- Study plan title
+- Time until deadline
+- Exact deadline date/time
+- Link to study plan
+
+## Email Template Styling
+
+All emails use inline CSS for maximum compatibility:
+
+```javascript
+const htmlContent = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h1 style="color: #3b82f6;">📚 Study Plan Reminder</h1>
+    <p>Your study plan <strong>${title}</strong> has a deadline approaching.</p>
+    <a href="${url}" 
+       style="display: inline-block; background-color: #3b82f6; color: white; 
+              padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+      View Study Plan
+    </a>
+  </div>
+`;
+```
+
+**Styling features:**
+- Maximum width 600px for readability
+- Brand colors (#3b82f6 blue)
+- Responsive design
+- Clear call-to-action buttons
+- Professional footer with disclaimer
+
+## Usage Example
+
+Implementing email notifications in an API route:
+
+```javascript
+import { sendDeadlineReminder } from '@/lib/email';
+import { getDb } from '@/lib/mongodb';
+
+export default async function handler(req, res) {
+  try {
+    const db = await getDb();
+    
+    // Find instances with deadlines in the next 24 hours
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const instances = await db.collection('instances')
+      .find({
+        deadline: { $lte: tomorrow },
+        reminderSent: { $ne: true }
+      })
+      .toArray();
+    
+    // Send reminders
+    for (const instance of instances) {
+      const user = await db.collection('users')
+        .findOne({ _id: instance.userId });
+      
+      if (user.email && user.notificationsEnabled) {
+        const result = await sendDeadlineReminder(user.email, instance);
+        
+        if (result.success) {
+          // Mark reminder as sent
+          await db.collection('instances').updateOne(
+            { _id: instance._id },
+            { $set: { reminderSent: true } }
+          );
+        }
+      }
+    }
+    
+    res.json({ success: true, count: instances.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+```
+
+## Rate Limits
+
+Gmail has sending limits to prevent spam:
+
+### Free Gmail Accounts
+- **500 emails per day**
+- **500 recipients per day** (each recipient counts separately)
+- **~100 recipients per message** (for bulk sends)
+
+### Google Workspace Accounts
+- **2,000 emails per day**
+- **10,000 recipients per day**
+- Better deliverability for transactional emails
+
+<Warning>
+  If you exceed these limits, Gmail will temporarily block your account from sending emails. Consider using a dedicated email service for high-volume applications.
+</Warning>
+
+## Troubleshooting
+
+### "Invalid login: 535-5.7.8 Username and Password not accepted"
+
+**Cause:** Incorrect credentials or using regular password instead of App Password.
+
+**Solutions:**
+1. Verify you're using an App Password, not your regular Gmail password
+2. Check 2-Factor Authentication is enabled
+3. Generate a new App Password and try again
+4. Ensure `GMAIL_USER` and `GMAIL_APP_PASSWORD` are set correctly
+
+### "Gmail not configured, skipping email send"
+
+**Cause:** Environment variables not set.
+
+**Solution:** Add `GMAIL_USER` and `GMAIL_APP_PASSWORD` to `.env.local` and restart server.
+
+### Emails Going to Spam
+
+**Possible causes:**
+1. New Gmail account with low sending reputation
+2. High volume of emails sent quickly
+3. Generic or spammy email content
+
+**Solutions:**
+1. Start with low sending volume and gradually increase
+2. Use descriptive subject lines
+3. Include clear sender information
+4. Add unsubscribe links
+5. Consider using a dedicated email service (SendGrid, AWS SES)
+
+### "Network Error" or Timeout
+
+**Possible causes:**
+1. Firewall blocking SMTP port (587 or 465)
+2. Server network restrictions
+
+**Solutions:**
+1. Verify SMTP ports are not blocked
+2. Check server firewall rules
+3. Try alternative SMTP ports
+
+## Production Considerations
+
+### For High-Volume Applications
+
+If you need to send more than 500 emails/day, consider dedicated email services:
+
+- **SendGrid** - 100 emails/day free, then paid plans
+- **AWS SES** - $0.10 per 1,000 emails
+- **Mailgun** - 5,000 emails/month free
+- **Postmark** - Focused on transactional emails
+
+### Migration to SendGrid Example
+
+```javascript
+import sgMail from '@sendgrid/mail';
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+export async function sendEmail(to, subject, html) {
+  const msg = {
+    to,
+    from: 'noreply@studysync.com', // Verified sender
+    subject,
+    html,
+  };
+  
+  try {
+    await sgMail.send(msg);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+```
+
+### Email Verification
+
+For production, verify recipient email addresses:
+
+1. Send confirmation email on signup
+2. Only send notifications to verified emails
+3. Provide easy unsubscribe mechanism
+4. Honor user notification preferences
+
+### Monitoring
+
+Track email delivery:
+
+```javascript
+const result = await sendReminderEmail(to, subject, html);
+
+// Log delivery status
+await db.collection('emailLogs').insertOne({
+  to,
+  subject,
+  success: result.success,
+  messageId: result.data?.messageId,
+  error: result.error,
+  timestamp: new Date()
+});
+```
+
+## Security Best Practices
+
+1. **Use App Passwords:** Never use your main Gmail password
+2. **Separate accounts:** Use different Gmail account for dev/prod
+3. **Rotate credentials:** Change App Passwords periodically
+4. **Validate recipients:** Ensure email addresses are valid
+5. **Rate limiting:** Implement application-level rate limits
+6. **Sanitize content:** Prevent email injection attacks
+7. **Monitor usage:** Track sending patterns for anomalies
+
+## Testing Emails in Development
+
+### Option 1: Send to Your Own Email
+
+```javascript
+const result = await sendTestEmail('your-email@gmail.com');
+console.log('Test email result:', result);
+```
+
+### Option 2: Use Mailtrap (Recommended)
+
+[Mailtrap](https://mailtrap.io/) captures emails without sending them:
+
+```javascript
+const testTransporter = nodemailer.createTransport({
+  host: "smtp.mailtrap.io",
+  port: 2525,
+  auth: {
+    user: process.env.MAILTRAP_USER,
+    pass: process.env.MAILTRAP_PASS,
+  },
+});
+```
+
+### Option 3: Ethereal Email
+
+Automatically generated test accounts:
+
+```javascript
+const testAccount = await nodemailer.createTestAccount();
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.ethereal.email',
+  port: 587,
+  auth: {
+    user: testAccount.user,
+    pass: testAccount.pass,
+  },
+});
+```
+
+## Environment Variables Summary
+
+```bash
+# Gmail SMTP Configuration
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=abcdefghijklmnop
+
+# App URL (used in email links)
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
+
+## Resources
+
+- [Gmail App Passwords Guide](https://support.google.com/accounts/answer/185833)
+- [Nodemailer Documentation](https://nodemailer.com/about/)
+- [Gmail SMTP Settings](https://support.google.com/mail/answer/7126229)
+- [Email Best Practices](https://developers.google.com/gmail/api/guides/sending)
