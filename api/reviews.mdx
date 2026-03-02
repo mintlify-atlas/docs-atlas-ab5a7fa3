@@ -1,0 +1,230 @@
+---
+title: Reviews API
+description: Submit and manage user reviews
+---
+
+## Overview
+
+The Reviews API allows authenticated users to submit feedback and reviews for the platform. Admin users can retrieve all reviews for analysis and moderation.
+
+## Submit Review
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://your-domain.com/api/reviews" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rating": 5,
+    "comment": "Great platform for organizing my study resources!"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/reviews', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    rating: 5,
+    comment: 'Great platform for organizing my study resources!'
+  })
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`POST /api/reviews`
+
+Submit a new review for the platform. Requires authentication.
+
+### Request Body
+
+<ParamField path="rating" type="number" required>
+  Rating from 1 to 5 stars
+</ParamField>
+
+<ParamField path="comment" type="string" required>
+  Review comment or feedback
+</ParamField>
+
+### Response
+
+<ResponseField name="_id" type="string">
+  Review ID
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  ID of the user who submitted the review
+</ResponseField>
+
+<ResponseField name="rating" type="number">
+  Rating value (1-5)
+</ResponseField>
+
+<ResponseField name="comment" type="string">
+  Review comment
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the review was created
+</ResponseField>
+
+<CodeGroup>
+```json Success Response
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "userId": "507f191e810c19729de860ea",
+  "rating": 5,
+  "comment": "Great platform for organizing my study resources!",
+  "createdAt": "2024-03-15T10:30:00.000Z"
+}
+```
+
+```json Error Response
+{
+  "error": "Validation Error",
+  "message": "Rating must be between 1 and 5"
+}
+```
+</CodeGroup>
+
+### Common Errors
+
+- **400 Bad Request** - Invalid rating (must be 1-5) or missing comment
+- **401 Unauthorized** - Missing or invalid authentication token
+- **500 Internal Server Error** - Server error while saving review
+
+---
+
+## Get All Reviews (Admin Only)
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/reviews" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/reviews', {
+  headers: { 'Authorization': `Bearer ${adminToken}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/reviews`
+
+Retrieve all submitted reviews with user information. Requires admin authentication.
+
+<Warning>
+This endpoint is restricted to admin users only. Regular users will receive a 403 Forbidden error.
+</Warning>
+
+### Response
+
+Returns an array of review objects enriched with user information.
+
+<ResponseField name="reviews" type="array">
+  Array of review objects
+  
+  <Expandable title="Review Object">
+    <ResponseField name="_id" type="string">
+      Review ID
+    </ResponseField>
+    
+    <ResponseField name="userId" type="string">
+      ID of the user who submitted the review
+    </ResponseField>
+    
+    <ResponseField name="rating" type="number">
+      Rating value (1-5)
+    </ResponseField>
+    
+    <ResponseField name="comment" type="string">
+      Review comment
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Timestamp when the review was created
+    </ResponseField>
+    
+    <ResponseField name="user" type="object">
+      User information
+      
+      <Expandable title="User Details">
+        <ResponseField name="_id" type="string">
+          User ID
+        </ResponseField>
+        
+        <ResponseField name="displayName" type="string">
+          User's display name
+        </ResponseField>
+        
+        <ResponseField name="email" type="string">
+          User's email address
+        </ResponseField>
+        
+        <ResponseField name="photoURL" type="string">
+          User's profile photo URL (optional)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<CodeGroup>
+```json Success Response
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "userId": "507f191e810c19729de860ea",
+    "rating": 5,
+    "comment": "Great platform for organizing my study resources!",
+    "createdAt": "2024-03-15T10:30:00.000Z",
+    "user": {
+      "_id": "507f191e810c19729de860ea",
+      "displayName": "John Doe",
+      "email": "john@example.com",
+      "photoURL": "https://example.com/photo.jpg"
+    }
+  },
+  {
+    "_id": "507f1f77bcf86cd799439012",
+    "userId": "507f191e810c19729de860eb",
+    "rating": 4,
+    "comment": "Very helpful for tracking progress across multiple courses.",
+    "createdAt": "2024-03-14T15:20:00.000Z",
+    "user": {
+      "_id": "507f191e810c19729de860eb",
+      "displayName": "Jane Smith",
+      "email": "jane@example.com"
+    }
+  }
+]
+```
+
+```json Error Response (Forbidden)
+{
+  "error": "Forbidden",
+  "message": "Admin access required"
+}
+```
+</CodeGroup>
+
+### Common Errors
+
+- **401 Unauthorized** - Missing or invalid authentication token
+- **403 Forbidden** - User does not have admin role
+- **500 Internal Server Error** - Server error while fetching reviews
+
+---
+
+## Notes
+
+- Reviews are sorted by newest first (descending `createdAt`)
+- User information is included only for admin requests to protect privacy
+- Each user can submit multiple reviews
+- Reviews are stored permanently and cannot be deleted by users (admin-only moderation)

@@ -91,7 +91,8 @@
               "api/resources",
               "api/user-progress",
               "api/users",
-              "api/notifications"
+              "api/notifications",
+              "api/reviews"
             ]
           }
         ]

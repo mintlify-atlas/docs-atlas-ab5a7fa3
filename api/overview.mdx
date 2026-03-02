@@ -9,7 +9,7 @@ The Study Sync API provides programmatic access to all platform features includi
 
 ## Base URL
 
-```
+```text
 https://your-domain.com/api
 ```
 
@@ -137,6 +137,18 @@ Study Sync uses MongoDB ObjectIds for resource identification. Valid ObjectIds a
 ### Notifications
 
 - [Notifications API](/api/notifications) - Manage notification settings
+
+### Reviews
+
+- [Reviews API](/api/reviews) - Submit and manage user reviews
+
+### Background Jobs
+
+- **GET /api/cron/reminders** - Process deadline reminders (automated via Vercel Cron)
+
+<Note>
+The cron endpoint is triggered automatically by Vercel Cron jobs and requires a `CRON_SECRET` for authorization. It processes all active instances with upcoming deadlines and sends email reminders based on user preferences.
+</Note>
 
 ## SDKs and Libraries
 

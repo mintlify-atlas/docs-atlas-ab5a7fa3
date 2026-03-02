@@ -7,7 +7,68 @@ description: Manage user profiles and notifications
 
 The Users API provides endpoints for managing user profiles and notifications. Users are automatically created when they first authenticate with a valid Firebase token.
 
-## Get Current User
+## Get Authenticated User
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/auth/me" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/auth/me', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const data = await response.json();
+```
+</CodeGroup>
+
+`GET /api/auth/me`
+
+Get the authenticated user directly from the Firebase token without a database query. This is faster than `/api/users/me` but returns less information.
+
+### Response
+
+<ResponseField name="_id" type="string">
+  User ID
+</ResponseField>
+
+<ResponseField name="firebaseUid" type="string">
+  Firebase authentication UID
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User's email address
+</ResponseField>
+
+<ResponseField name="displayName" type="string">
+  User's display name
+</ResponseField>
+
+<ResponseField name="role" type="string">
+  User role (default: "user", can be "admin")
+</ResponseField>
+
+<CodeGroup>
+```json Success Response
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "firebaseUid": "abc123xyz",
+  "email": "user@example.com",
+  "displayName": "John Doe",
+  "role": "user"
+}
+```
+
+```json Error Response
+{
+  "error": "Unauthorized",
+  "message": "Authentication required"
+}
+```
+</CodeGroup>
+
+## Get Current User Profile
 
 <CodeGroup>
 ```bash cURL
