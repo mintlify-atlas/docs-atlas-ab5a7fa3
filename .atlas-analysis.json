@@ -1,0 +1,120 @@
+{
+  "projectType": "saas",
+  "projectName": "Study Sync",
+  "projectDescription": "A collaborative study management platform for creating, organizing, and tracking study plans with multi-source resources and progress monitoring.",
+  "theme": "almond",
+  "primaryColor": "#8B5CF6",
+  "lightColor": "#A78BFA",
+  "darkColor": "#7C3AED",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/study-plans",
+              "features/instances",
+              "features/resources",
+              "features/progress-tracking",
+              "features/collaboration",
+              "features/notifications"
+            ]
+          },
+          {
+            "group": "User Guides",
+            "pages": [
+              "guides/creating-plans",
+              "guides/managing-instances",
+              "guides/adding-resources",
+              "guides/sharing-collaborating",
+              "guides/dashboard"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment",
+              "configuration/firebase",
+              "configuration/mongodb",
+              "configuration/youtube-api",
+              "configuration/email"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/database-schema",
+              "architecture/authentication",
+              "architecture/resource-pool"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/study-plans",
+              "api/instances",
+              "api/resources",
+              "api/user-progress",
+              "api/users",
+              "api/notifications"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Create and share study plans with curated resources",
+    "Multi-source resource integration (YouTube, PDFs, articles)",
+    "Instance-based progress tracking with dual metrics",
+    "Collaborative editing with role-based access control",
+    "Smart email notifications and deadline reminders",
+    "Global resource pool with de-duplication",
+    "Beautiful gradient-based UI with dark mode support",
+    "Firebase authentication with MongoDB storage"
+  ],
+  "publicApiSurface": [
+    "GET /api/study-plans - List study plans",
+    "POST /api/study-plans - Create study plan",
+    "GET /api/study-plans/:id - Get study plan details",
+    "PUT /api/study-plans/:id - Update study plan",
+    "DELETE /api/study-plans/:id - Delete study plan",
+    "POST /api/study-plans/:id/share - Share plan with collaborator",
+    "GET /api/instances - Get user instances",
+    "POST /api/instances - Create instance from plan",
+    "GET /api/instances/:id - Get instance details",
+    "PUT /api/instances/:id - Update instance",
+    "DELETE /api/instances/:id - Delete instance",
+    "POST /api/resources - Create or get resource",
+    "GET /api/resources/:id - Get resource details",
+    "GET /api/resources/bulk - Get multiple resources",
+    "GET /api/user-progress - Get user progress",
+    "POST /api/user-progress - Toggle resource completion",
+    "GET /api/users/me - Get current user",
+    "GET /api/notifications/settings - Get notification settings",
+    "PUT /api/notifications/settings - Update notification settings"
+  ]
+}
